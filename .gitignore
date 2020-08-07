@@ -1,0 +1,9 @@
+*.rkt~
+*.rkt#*
+.#*.rkt
+
+compiled/
+doc/
+docs/
+scribblings/compiled/
+
