@@ -3,6 +3,6 @@
 (define deps '("base" "html-parsing"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/http-client.scrbl" ())))
-(define pkg-desc "A practical http client library for requesting data to http servers.")
+(define pkg-desc "A practical http client library for sending data to http servers.")
 (define version "0.1")
 (define pkg-authors '("Yanying Wang"))
