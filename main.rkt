@@ -158,12 +158,14 @@
 
 (module+ test
   (require rackunit)
+
   (define conn-basic
     (http-connection "https://example.com" (hasheq) (hasheq)))
   (define conn-httpbin
     (http-connection "https://httpbin.org" (hasheq) (hasheq)))
 
   (check-true (current-http-response-autoc))
+
   (parameterize ([current-http-response-autoc #f])
     (define res (http-get conn-basic))
     (check-false (current-http-response-autoc))
@@ -171,6 +173,7 @@
     (check-equal? (hash-ref (http-response-headers res) 'Content-Type)
                   "text/html; charset=UTF-8")
     (check-true (string? (http-response-body res))))
+
   (check-true (current-http-response-autoc))
 
   (let ([res (http-get conn-basic)])
