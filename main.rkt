@@ -13,6 +13,13 @@
          xml
          html-parsing)
 
+(provide current-http-user-agent
+         current-http-response-autoc
+         http-connection
+         http-request
+         http-response
+         http-get)
+
 ;; https://lostisland.github.io/faraday/usage/
 ;;;;; need setup a new racket pkg for this file: http-client
 
