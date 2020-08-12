@@ -18,15 +18,30 @@ A practical http client library for sending data to http servers.
 
 
 @section{Example}
-@examples[
+@#reader scribble/comment-reader
+(examples
 #:eval (sanbox-eval)
+
+;; check default value
+(current-http-response-autoc)
+
 (define conn1
-  (http-connection "https://example.com" (hasheq) (hasheq)))
-conn1
+(http-connection "https://example.com" (hasheq) (hasheq)))
 
 (define res (http-get conn1))
-res
-]
+
+(http-response-code res)
+(http-response-headers res)
+;; auto converted to racket type values.
+(car (http-response-body res))
+
+(parameterize ([current-http-response-autoc #f])
+(substring (http-response-body (http-get conn1)) 0 50))
+
+;; globally change to show the raw http response body.
+(current-http-response-autoc #f)
+(substring (http-response-body (http-get conn1)) 0 50)
+)
 
 @section{Reference}
 
@@ -36,4 +51,4 @@ Please create an issue for this repo on the Github.
 
 @section{TODO}
 @itemlist[@item{item1}
-          @item{item1-content}]
+          @item{item2}]

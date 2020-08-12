@@ -18,7 +18,12 @@
          http-connection
          http-request
          http-response
-         http-get)
+         http-get
+         http-response-request
+         http-response-code
+         http-response-headers
+         http-response-body
+         )
 
 ;; https://lostisland.github.io/faraday/usage/
 ;;;;; need setup a new racket pkg for this file: http-client
@@ -27,7 +32,10 @@
 ;; (current-header-user-agent "")
 ;; (current-header-content-type "")
 ;; (current-header-cookie "")
-(define current-http-user-agent (make-parameter (printf "http-client[~a/~a-~a]" (system-type) (system-type 'vm) (version))))
+
+;; TODO: use current-http-user-agent in the reqeuster headers
+(define current-http-user-agent
+  (make-parameter @~a{http-client[@(system-type)/@(system-type 'vm)-(version)]}))
 (define current-http-response-autoc (make-parameter #t))
 
 
