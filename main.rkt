@@ -1,26 +1,5 @@
 #lang at-exp racket/base
 
-
-;; Notice
-;; To install (from within the package directory):
-;;   $ raco pkg install
-;; To install (once uploaded to pkgs.racket-lang.org):
-;;   $ raco pkg install <<name>>
-;; To uninstall:
-;;   $ raco pkg remove <<name>>
-;; To view documentation:
-;;   $ raco docs <<name>>
-;;
-;; For your convenience, we have included LICENSE-MIT and LICENSE-APACHE files.
-;; If you would prefer to use a different license, replace those files with the
-;; desired license.
-;;
-;; Some users like to add a `private/` directory, place auxiliary files there,
-;; and require them in `main.rkt`.
-;;
-;; See the current version of the racket style guide here:
-;; http://docs.racket-lang.org/style/index.html
-
 (require racket/string
          racket/list
          racket/hash
@@ -41,8 +20,8 @@
 ;; (current-header-user-agent "")
 ;; (current-header-content-type "")
 ;; (current-header-cookie "")
-(define current-http-user-agent (make-parameter "http-client[macosx/racket]"))
-(define current-http-response-auto (make-parameter #t))
+(define current-http-user-agent (make-parameter (printf "http-client[~a/~a-~a]" (system-type) (system-type 'vm) (version))))
+(define current-http-response-autoc (make-parameter #t))
 
 
 (struct http-connection (url headers data) ;; TODO: auto fill in different values for different fields.
@@ -51,7 +30,7 @@
      (define (fmcl k v)
        (define length (string-length (~a v)))
        (define marker @~a{......[@length]})
-       @~a{@|k|: @(~a @v #:max-width 128 #:limit-marker @marker)})
+       @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
      (display @~a{#<http-connection
                   @(fmcl "url" @(http-connection-url conn))
                   @(fmcl "headers" @(http-connection-headers conn))
@@ -65,7 +44,7 @@
      (define (fmcl k v)
        (define length (string-length (~a v)))
        (define marker @~a{......[@length]})
-       @~a{@|k|: @(~a @v #:max-width 128 #:limit-marker @marker)})
+       @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
 
      (display @~a{#<http-request
                   @(fmcl "url" @(http-request-url rqt))
@@ -81,14 +60,9 @@
      (define (fmcl k v)
        (define length (string-length (~a v)))
        (define marker @~a{......[@length]})
-       @~a{@|k|: @(~a @v #:max-width 128 #:limit-marker @marker)})
+       @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
      (display @~a{#<http-response
-                  #<request
-                  @(fmcl "url" @(http-request-url rqt))
-                  @(fmcl "method" @(http-request-method rqt))
-                  @(fmcl "headers" @(http-request-headers rqt))
-                  @(fmcl "data" @(http-request-data rqt))
-                  >
+                  #<request @(~v @(http-request-method rqt) @(http-request-url rqt)) ...>
                   @(fmcl "code" @(http-response-code self))
                   @(fmcl "headers" @(http-response-headers self))
                   @(fmcl "body" @(http-response-body self))
@@ -100,7 +74,7 @@
                   #:headers [headers (hasheq)])
   (http-do 'get conn data #:path path #:headers headers))
 
-
+;; TODO: add contracts
 (define (http-do method conn [data1 (hasheq)]
                  #:path [path ""]
                  #:headers [headers1 (hasheq)])
@@ -121,11 +95,16 @@
   (define req-path (if (empty? req-path1&2)
                        "/"
                        (string-join req-path1&2 "")))
+
   (define req-headers (hash-union headers1 headers2
                                   #:combine/key (lambda (k v1 v2) v1)))
   (define req-data (hash-union data1 data2 data3
                                #:combine/key (lambda (k v1 v2) v1)))
-  (define req (http-request (string-append req-host req-path)
+  (define req (http-request (string-append (url-scheme url)
+                                           "://"
+                                           req-host
+                                           (if (url-port url) (url-port url) "")
+                                           req-path)
                             method req-headers req-data))
 
   (define req-headers-raw
@@ -159,14 +138,16 @@
          (define k (string->symbol a))
          (define v (string-trim (string-join b)))
          (values k v)])))
+
   (define res-body
     (match res-headers
-      [ (hash-table 'Content-Type value)
-        #:when (string-prefix? value "application/json;")
-        (string->jsexpr res-body-raw)]
-      [(regexp #rx"^text/html;.*")
+      [_ #:when (not (current-http-response-autoc))
+         res-body-raw]
+      [(hash-table ('Content-Type (regexp #rx"^application/json;.*")))
+       (string->jsexpr res-body-raw)]
+      [(hash-table ('Content-Type (regexp #rx"^text/html;.*")))
        (html->xexp res-body-raw)]
-      [(regexp #rx"^(application/xml|text/xml|application/xhtml+xml).*")
+      [(hash-table ('Content-Type (regexp #rx"^(application/xml|text/xml|application/xhtml+xml).*")))
        (string->xexpr res-body-raw)]
       [_ res-body-raw]))
 
@@ -177,40 +158,38 @@
 
 (module+ test
   (require rackunit)
-
-
-  (define conn-basic (http-connection "https://example.com"
-                                      (hasheq)
-                                      (hasheq)))
-  (define res-basic (http-get conn))
-  (check-equal? 200
-                (http-response-code res-basic))
-
-  ;; TODO: test body of the chinese web page like www.qq.com
-
+  (define conn-basic
+    (http-connection "https://example.com" (hasheq) (hasheq)))
   (define conn-httpbin
     (http-connection "https://httpbin.org" (hasheq) (hasheq)))
-  (define res-status (http-get conn-httpbin
-                               #:path "/status/308"
-                               #:headers (hash 'accept "text/plain")))
-  (check-equal? 300
-                (http-response-code res-status))
 
+  (check-true (current-http-response-autoc))
+  (parameterize ([current-http-response-autoc #f])
+    (define res (http-get conn-basic))
+    (check-false (current-http-response-autoc))
+    (check-equal? (http-response-code res) 200)
+    (check-equal? (hash-ref (http-response-headers res) 'Content-Type)
+                  "text/html; charset=UTF-8")
+    (check-true (string? (http-response-body res))))
+  (check-true (current-http-response-autoc))
 
+  (let ([res (http-get conn-basic)])
+    (check-equal? (http-response-code res) 200)
+    (check-equal? (hash-ref (http-response-headers res) 'Content-Type)
+                  "text/html; charset=UTF-8")
+    (check-true (list? (http-response-body res))))
+
+  (let* ([res (http-get conn-httpbin
+                       #:path "/status/309"
+                       #:headers (hasheq 'accept "text/plain"))]
+         [req (http-response-request res)])
+    (check-equal? (http-request-method req)
+                  'get)
+    (check-equal? (http-request-url req)
+                  "https://httpbin.org/status/309")
+    (check-equal? (http-request-headers req)
+                  (hasheq 'accept "text/plain"))
+    (check-equal? (http-response-code res) 309))
+
+  ;; TODO: test body of the chinese web page like www.qq.com
   )
-
-
-;; (module+ main
-;;   ;; (Optional) main submodule. Put code here if you need it to be executed when
-;;   ;; this file is run using DrRacket or the `racket` executable.  The code here
-;;   ;; does not run when this file is required by another module. Documentation:
-;;   ;; http://docs.racket-lang.org/guide/Module_Syntax.html#%28part._main-and-test%29
-
-;;   (require racket/cmdline)
-;;   (define who (box "world"))
-;;   (command-line
-;;     #:program "my-program"
-;;     #:once-each
-;;     [("-n" "--name") name "Who to say hello to" (set-box! who name)]
-;;     #:args ()
-;;     (printf "hello ~a~n" (unbox who))))
