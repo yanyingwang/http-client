@@ -183,6 +183,7 @@
   (define conn1
     (http-connection "https://httpbin.org/anything" (hasheq 'Accept "application/json") (hasheq 'made-in "China" 'price 10)))
 
+
   (check-true (current-http-response-auto))
 
   (let* ([res (http-get conn)]
@@ -236,7 +237,6 @@
                              ('Token "temp-token-abcef")))
     (check-equal? (hash-ref res-body 'data)
                   "{\"price\":10,\"color\":\"red\",\"made-in\":\"China\"}"))
-
 
   (let* ([res (http-get conn1
                         #:headers (hasheq 'Accept "application/x-www-form-urlencoded"))]

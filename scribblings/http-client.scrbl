@@ -51,5 +51,7 @@ Please create an issue for this repo on the Github.
 
 
 @section{TODO}
-@itemlist[@item{item1}
-          @item{item2}]
+@itemlist[@item{optimize the shown of struct in terminal, missing double quotation marks when content is too long}
+          @item{add contracts to provide funcs}
+          @item{add more http methods}
+          @item{fix TODOs comments of code}]
