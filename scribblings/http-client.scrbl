@@ -9,9 +9,12 @@
 @title{http-client}
 @author[(author+email "Yanying Wang" "yanyingwang1@gmail.com")]
 
+
 @defmodule[http-client]
 
 A practical http client library for sending data to http servers.
+
+Still under contruction....
 
 @[table-of-contents]
 
@@ -22,25 +25,23 @@ A practical http client library for sending data to http servers.
 (examples
 #:eval (sanbox-eval)
 
-;; check default value
-(current-http-response-autoc)
-
-(define conn1
-(http-connection "https://example.com" (hasheq) (hasheq)))
-
-(define res (http-get conn1))
+(define conn
+    (http-connection "https://httpbin.org/anything"
+                     (hasheq 'Accept "application/json")
+                     (hasheq 'made-in "China" 'price 10)))
+(define res
+  (http-post conn (hasheq 'color "red")
+             #:path "/fruits"
+             #:headers (hasheq 'Token "temp-token-abcef")))
 
 (http-response-code res)
 (http-response-headers res)
-;; auto converted to racket type values.
-(car (http-response-body res))
+;; http response body is auto converted to the racket types.
+(http-response-body res)
 
-(parameterize ([current-http-response-autoc #f])
-(substring (http-response-body (http-get conn1)) 0 50))
-
-;; globally change to show the raw http response body.
-(current-http-response-autoc #f)
-(substring (http-response-body (http-get conn1)) 0 50)
+;; set current-http-response-auto to use raw http response body.
+(parameterize ([current-http-response-auto #f])
+  (http-response-body (http-get conn)))
 )
 
 @section{Reference}

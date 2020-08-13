@@ -14,29 +14,23 @@
          html-parsing)
 
 (provide current-http-user-agent
-         current-http-response-autoc
+         current-http-response-auto
          http-connection
          http-request
          http-response
          http-get
+         http-post
          http-response-request
          http-response-code
          http-response-headers
          http-response-body
          )
 
-;; https://lostisland.github.io/faraday/usage/
-;;;;; need setup a new racket pkg for this file: http-client
-
-;; (current-header-accept "")
-;; (current-header-user-agent "")
-;; (current-header-content-type "")
-;; (current-header-cookie "")
 
 ;; TODO: use current-http-user-agent in the reqeuster headers
 (define current-http-user-agent
   (make-parameter @~a{http-client[@(system-type)/@(system-type 'vm)-(version)]}))
-(define current-http-response-autoc (make-parameter #t))
+(define current-http-response-auto (make-parameter #t))
 
 
 (struct http-connection (url headers data) ;; TODO: auto fill in different values for different fields.
@@ -89,6 +83,11 @@
                   #:headers [headers (hasheq)])
   (http-do 'get conn data #:path path #:headers headers))
 
+(define (http-post conn [data (hasheq)]
+                   #:path [path ""]
+                   #:headers [headers (hasheq)])
+  (http-do 'post conn data #:path path #:headers headers))
+
 ;; TODO: add contracts
 (define (http-do method conn [data1 (hasheq)]
                  #:path [path ""]
@@ -129,7 +128,12 @@
     (match req-headers
       ;; [(? hash-empty?) ""]
       [(hash-table ('Accept "application/json")) (jsexpr->string req-data)]
-      [_ (alist->form-urlencoded (hash->list req-data))]))
+      ;; [(hash-table ('Accept "application/x-www-form-urlencoded")) (alist->form-urlencoded (hash->list req-data))]
+      [_ (alist->form-urlencoded (hash-map req-data
+                                           (lambda (k v)
+                                             (cons k (if (number? v)
+                                                         (number->string v)
+                                                         v)))))]))
 
   (define-values (res-status-raw res-headers-raw res-in)
     (http-sendrecv req-host req-path
@@ -156,11 +160,11 @@
 
   (define res-body
     (match res-headers
-      [_ #:when (not (current-http-response-autoc))
+      [_ #:when (not (current-http-response-auto))
          res-body-raw]
-      [(hash-table ('Content-Type (regexp #rx"^application/json;.*")))
+      [(hash-table ('Content-Type (regexp #rx"^application/json.*")))
        (string->jsexpr res-body-raw)]
-      [(hash-table ('Content-Type (regexp #rx"^text/html;.*")))
+      [(hash-table ('Content-Type (regexp #rx"^text/html.*")))
        (html->xexp res-body-raw)]
       [(hash-table ('Content-Type (regexp #rx"^(application/xml|text/xml|application/xhtml+xml).*")))
        (string->xexpr res-body-raw)]
@@ -174,40 +178,74 @@
 (module+ test
   (require rackunit)
 
-  (define conn-basic
-    (http-connection "https://example.com" (hasheq) (hasheq)))
-  (define conn-httpbin
+  (define conn
     (http-connection "https://httpbin.org" (hasheq) (hasheq)))
+  (define conn1
+    (http-connection "https://httpbin.org/anything" (hasheq 'Accept "application/json") (hasheq 'made-in "China" 'price 10)))
 
-  (check-true (current-http-response-autoc))
+  (check-true (current-http-response-auto))
 
-  (parameterize ([current-http-response-autoc #f])
-    (define res (http-get conn-basic))
-    (check-false (current-http-response-autoc))
+  (let* ([res (http-get conn)]
+         [res-headers (http-response-headers res)]
+         [res-body (http-response-body res)])
     (check-equal? (http-response-code res) 200)
-    (check-equal? (hash-ref (http-response-headers res) 'Content-Type)
-                  "text/html; charset=UTF-8")
-    (check-true (string? (http-response-body res))))
-
-  (check-true (current-http-response-autoc))
-
-  (let ([res (http-get conn-basic)])
-    (check-equal? (http-response-code res) 200)
-    (check-equal? (hash-ref (http-response-headers res) 'Content-Type)
-                  "text/html; charset=UTF-8")
+    (check-equal? (hash-ref res-headers 'Content-Type)
+                  "text/html; charset=utf-8")
     (check-true (list? (http-response-body res))))
 
-  (let* ([res (http-get conn-httpbin
-                       #:path "/status/309"
-                       #:headers (hasheq 'accept "text/plain"))]
+  (parameterize ([current-http-response-auto #f])
+    (check-false (current-http-response-auto))
+    (define res (http-get conn))
+    (define res-headers (http-response-headers res))
+    (define res-body (http-response-body res))
+    (check-true (string? (http-response-body res))))
+
+  (let* ([res (http-get conn #:path "/status/309")]
          [req (http-response-request res)])
-    (check-equal? (http-request-method req)
-                  'get)
-    (check-equal? (http-request-url req)
-                  "https://httpbin.org/status/309")
-    (check-equal? (http-request-headers req)
-                  (hasheq 'accept "text/plain"))
+    (check-equal? (http-request-url req) "https://httpbin.org/status/309")
+    (check-equal? (http-request-method req) 'get)
     (check-equal? (http-response-code res) 309))
+
+
+  (let* ([res (http-post conn1 (hasheq 'color "red")
+                         #:path "/fruits"
+                         #:headers (hasheq 'Token "temp-token-abcef"))]
+         [req (http-response-request res)]
+         [res-code (http-response-code res)]
+         [res-headers (http-response-headers res)]
+         [res-body (http-response-body res)])
+
+    (check-equal? (http-request-url req)
+                  "https://httpbin.org/anything/fruits")
+    (check-equal? (http-request-method req) 'post)
+    (check-equal? (http-request-headers req)
+                  (hasheq 'Accept "application/json" 'Token "temp-token-abcef"))
+    (check-equal? (http-request-data req)
+                  (hasheq 'color "red" 'made-in "China" 'price 10))
+
+    (check-equal? res-code 200)
+    (check-match res-headers
+                 (hash-table ('Content-Type "application/json")))
+    (check-pred hash? res-body)
+
+    ;; check client's request headers and data, which was response by the httpbin.org within the response body.
+    (check-equal? (hash-ref res-body 'url)
+                  "https://httpbin.org/anything/fruits")
+    (check-match (hash-ref res-body 'headers)
+                 (hash-table ('Accept "application/json")
+                             ('Token "temp-token-abcef")))
+    (check-equal? (hash-ref res-body 'data)
+                  "{\"price\":10,\"color\":\"red\",\"made-in\":\"China\"}"))
+
+
+  (let* ([res (http-get conn1
+                        #:headers (hasheq 'Accept "application/x-www-form-urlencoded"))]
+         [req (http-response-request res)]
+         [res-code (http-response-code res)]
+         [res-body (http-response-body res)])
+    (check-equal? res-code 200)
+    (check-equal? (hash-ref res-body 'data)
+                  "price=10&made-in=China"))
 
   ;; TODO: test body of the chinese web page like www.qq.com
   )
