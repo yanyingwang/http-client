@@ -36,13 +36,14 @@ Still under contruction....
 
 (http-response-code res)
 (http-response-headers res)
-;; http response body is auto converted to the racket types.
-(http-response-body res)
 
-;; set current-http-response-auto to use raw http response body.
+(http-response-body res)
+;; http response body is auto converted to the racket types.
+
+
 (parameterize ([current-http-response-auto #f])
-  (http-response-body (http-get conn)))
-)
+  (http-response-body (http-get conn))))
+;; set current-http-response-auto to #f to get a raw format http response body.
 
 @section{Reference}
 
