@@ -16,8 +16,21 @@
 (provide current-http-user-agent
          current-http-response-auto
          http-connection
+         http-connection-url
+         http-connection-headers
+         http-connection-data
+
          http-request
+         http-request-url
+         http-request-headers
+         http-request-data
+
          http-response
+         http-response-request
+         http-response-code
+         http-response-headers
+         http-response-body
+
          ;; TODO: add contracts
          http-get
          http-head
@@ -26,10 +39,6 @@
          http-delete
          http-options
          http-patch
-         http-response-request
-         http-response-code
-         http-response-headers
-         http-response-body
          )
 
 
@@ -51,6 +60,7 @@
                   @(fmcl "data" @(http-connection-data conn))
                   >} port))])
 
+;; TODO: http-request should be derived from http-connection
 (struct http-request (url method headers data)
   #:methods gen:custom-write
   [(define (write-proc rqt port mode)

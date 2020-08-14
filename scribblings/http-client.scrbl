@@ -29,30 +29,38 @@ Still under contruction....
     (http-connection "https://httpbin.org/anything"
                      (hasheq 'Accept "application/json")
                      (hasheq 'made-in "China" 'price 10)))
+
 (define res
   (http-post conn (hasheq 'color "red")
              #:path "/fruits"
              #:headers (hasheq 'Token "temp-token-abcef")))
 
-
 (http-response-code res)
 (http-response-headers res)
-(http-response-body res)
 ;; http response body is auto converted to the racket types.
+(http-response-body res)
 
 
+;; change the headers to do the post with html form
 (define res1
-  (http-post conn (hasheq 'color "red")
-             #:path "/fruits"
+  (http-post conn
              #:headers (hasheq 'Accept "application/x-www-form-urlencoded")))
-(http-response-code res1)
-(http-response-headers res1)
-(http-response-headers res1)
+(http-response-body res1)
 
 
-(parameterize ([current-http-response-auto #f])
-  (http-response-body (http-get conn))))
+;; do html form post with copying and changing a pre defined conn's headers
+(define new-conn
+  (struct-copy http-connection conn
+               [headers (hasheq 'Accept "application/x-www-form-urlencoded")]))
+(http-post new-conn)
+
+
 ;; set current-http-response-auto to #f to get a raw format http response body.
+(parameterize ([current-http-response-auto #f])
+  (http-response-body (http-get conn)))
+
+)
+
 
 @section{Reference}
 
