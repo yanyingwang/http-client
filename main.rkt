@@ -77,16 +77,48 @@
                   @(fmcl "body" @(http-response-body self))
                   >} port))])
 
+;; TODO: make below be used.
+;; (define-syntax define-http-method
+;;   (syntax-rules ()
+;;     [(_ method)
+;;      (define abc method)]))
+;; (define-http-method 'get)
 
 (define (http-get conn [data (hasheq)]
                   #:path [path ""]
                   #:headers [headers (hasheq)])
   (http-do 'get conn data #:path path #:headers headers))
 
+(define (http-head conn [data (hasheq)]
+                   #:path [path ""]
+                   #:headers [headers (hasheq)])
+  (http-do 'head conn data #:path path #:headers headers))
+
 (define (http-post conn [data (hasheq)]
                    #:path [path ""]
                    #:headers [headers (hasheq)])
   (http-do 'post conn data #:path path #:headers headers))
+
+(define (http-put conn [data (hasheq)]
+                   #:path [path ""]
+                   #:headers [headers (hasheq)])
+  (http-do 'put conn data #:path path #:headers headers))
+
+(define (http-delete conn [data (hasheq)]
+                   #:path [path ""]
+                   #:headers [headers (hasheq)])
+  (http-do 'delete conn data #:path path #:headers headers))
+
+(define (http-options conn [data (hasheq)]
+                   #:path [path ""]
+                   #:headers [headers (hasheq)])
+  (http-do 'options conn data #:path path #:headers headers))
+
+(define (http-patch conn [data (hasheq)]
+                   #:path [path ""]
+                   #:headers [headers (hasheq)])
+  (http-do 'patch conn data #:path path #:headers headers))
+
 
 ;; TODO: add contracts
 (define (http-do method conn [data1 (hasheq)]
@@ -138,7 +170,7 @@
   (define-values (res-status-raw res-headers-raw res-in)
     (http-sendrecv req-host req-path
                    #:ssl? (match (url-scheme url) ["https" #t] [_ #f])
-                   #:method (string->bytes/utf-8 (string-upcase (symbol->string method)))
+                   #:method (string-upcase (symbol->string method))
                    #:port (match (url-port url)
                             [(? integer? n) n]
                             [#f #:when (string=? (url-scheme url) "https")
