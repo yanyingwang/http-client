@@ -32,9 +32,8 @@
          )
 
 
-;; TODO: use current-http-user-agent in the reqeuster headers
 (define current-http-user-agent
-  (make-parameter @~a{http-client[@(system-type)/@(system-type 'vm)-(version)]}))
+  (make-parameter @~a{http-client[@(system-type)/@(system-type 'vm)-@(version)]}))
 (define current-http-response-auto (make-parameter #t))
 
 
@@ -147,7 +146,7 @@
                        "/"
                        (string-join req-path1&2 "")))
 
-  (define req-headers (hash-union headers1 headers2
+  (define req-headers (hash-union headers1 headers2 (hasheq 'User-Agent (current-http-user-agent))
                                   #:combine/key (lambda (k v1 v2) v1)))
   (define req-data (hash-union data1 data2 data3
                                #:combine/key (lambda (k v1 v2) v1)))
@@ -256,8 +255,8 @@
     (check-equal? (http-request-url req)
                   "https://httpbin.org/anything/fruits")
     (check-equal? (http-request-method req) 'post)
-    (check-equal? (http-request-headers req)
-                  (hasheq 'Accept "application/json" 'Token "temp-token-abcef"))
+    (check-match (http-request-headers req)
+                 (hash-table ('Accept "application/json") ('Token "temp-token-abcef")))
     (check-equal? (http-request-data req)
                   (hasheq 'color "red" 'made-in "China" 'price 10))
 
