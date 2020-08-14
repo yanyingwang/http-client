@@ -34,11 +34,20 @@ Still under contruction....
              #:path "/fruits"
              #:headers (hasheq 'Token "temp-token-abcef")))
 
+
 (http-response-code res)
 (http-response-headers res)
-
 (http-response-body res)
 ;; http response body is auto converted to the racket types.
+
+
+(define res1
+  (http-post conn (hasheq 'color "red")
+             #:path "/fruits"
+             #:headers (hasheq 'Accept "application/x-www-form-urlencoded")))
+(http-response-code res1)
+(http-response-headers res1)
+(http-response-headers res1)
 
 
 (parameterize ([current-http-response-auto #f])
@@ -54,5 +63,4 @@ Please create an issue for this repo on the Github.
 @section{TODO}
 @itemlist[@item{optimize the shown of struct in terminal, missing double quotation marks when content is too long}
           @item{add contracts to provide funcs}
-          @item{add more http methods}
           @item{fix TODOs comments of code}]

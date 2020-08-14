@@ -18,6 +18,7 @@
          http-connection
          http-request
          http-response
+         ;; TODO: add contracts
          http-get
          http-head
          http-post
@@ -124,7 +125,7 @@
   (http-do 'patch conn data #:path path #:headers headers))
 
 
-;; TODO: add contracts
+
 (define (http-do method conn [data1 (hasheq)]
                  #:path [path ""]
                  #:headers [headers1 (hasheq)])
@@ -265,7 +266,7 @@
                  (hash-table ('Content-Type "application/json")))
     (check-pred hash? res-body)
 
-    ;; check client's request headers and data, which was response by the httpbin.org within the response body.
+    ;; check client's request headers and data, which was responsed by the httpbin.org in the response body.
     (check-equal? (hash-ref res-body 'url)
                   "https://httpbin.org/anything/fruits")
     (check-match (hash-ref res-body 'headers)
