@@ -19,7 +19,12 @@
          http-request
          http-response
          http-get
+         http-head
          http-post
+         http-put
+         http-delete
+         http-options
+         http-patch
          http-response-request
          http-response-code
          http-response-headers
