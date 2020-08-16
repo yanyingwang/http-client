@@ -50,6 +50,7 @@
 (struct http-connection (url headers data) ;; TODO: auto fill in different values for different fields.
   #:methods gen:custom-write
   [(define (write-proc conn port mode)
+     ;; TODO: define a global fmcl and use it for every struct.
      (define (fmcl k v)
        (define length (string-length (~a v)))
        (define marker @~a{......[@length]})
