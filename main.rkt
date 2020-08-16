@@ -295,5 +295,6 @@
     (check-equal? (hash-ref res-body 'data)
                   "price=10&made-in=China"))
 
+  ;; TODO: fix https://view.inews.qq.com/g2/getOnsInfo?name=disease_h5
   ;; TODO: test body of the chinese web page like www.qq.com
   )
