@@ -47,18 +47,24 @@
 (define current-http-response-auto (make-parameter #t))
 
 
-(struct http-connection (url headers data) ;; TODO: auto fill in different values for different fields.
+(struct http-connection (url headers data)
+  #:property prop:procedure
+  (lambda (self method
+           #:path [path ""]
+           #:data [data (hasheq)]
+           #:headers [headers (hasheq)])
+    (http-do 'get self #:data data #:path path #:headers headers))
   #:methods gen:custom-write
-  [(define (write-proc conn port mode)
+  [(define (write-proc self port mode)
      ;; TODO: define a global fmcl and use it for every struct.
      (define (fmcl k v)
        (define length (string-length (~a v)))
        (define marker @~a{......[@length]})
        @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
      (display @~a{#<http-connection
-                  @(fmcl "url" @(http-connection-url conn))
-                  @(fmcl "headers" @(http-connection-headers conn))
-                  @(fmcl "data" @(http-connection-data conn))
+                  @(fmcl "url" @(http-connection-url self))
+                  @(fmcl "headers" @(http-connection-headers self))
+                  @(fmcl "data" @(http-connection-data self))
                   >} port))])
 
 ;; TODO: http-request should be derived from http-connection
@@ -100,44 +106,52 @@
 ;;      (define abc method)]))
 ;; (define-http-method 'get)
 
-(define (http-get conn [data (hasheq)]
+(define (http-get conn
+                  #:data [data (hasheq)]
                   #:path [path ""]
                   #:headers [headers (hasheq)])
-  (http-do 'get conn data #:path path #:headers headers))
+  (http-do 'get conn #:data data #:path path #:headers headers))
 
-(define (http-head conn [data (hasheq)]
+(define (http-head conn
+                   #:data [data (hasheq)]
                    #:path [path ""]
                    #:headers [headers (hasheq)])
-  (http-do 'head conn data #:path path #:headers headers))
+  (http-do 'head conn #:data data #:path path #:headers headers))
 
-(define (http-post conn [data (hasheq)]
+(define (http-post conn
+                   #:data [data (hasheq)]
                    #:path [path ""]
                    #:headers [headers (hasheq)])
-  (http-do 'post conn data #:path path #:headers headers))
+  (http-do 'post conn #:data data #:path path #:headers headers))
 
-(define (http-put conn [data (hasheq)]
-                   #:path [path ""]
-                   #:headers [headers (hasheq)])
-  (http-do 'put conn data #:path path #:headers headers))
+(define (http-put conn
+                  #:data [data (hasheq)]
+                  #:path [path ""]
+                  #:headers [headers (hasheq)])
+  (http-do 'put conn #:data data #:path path #:headers headers))
 
-(define (http-delete conn [data (hasheq)]
-                   #:path [path ""]
-                   #:headers [headers (hasheq)])
-  (http-do 'delete conn data #:path path #:headers headers))
+(define (http-delete conn
+                     #:data [data (hasheq)]
+                     #:path [path ""]
+                     #:headers [headers (hasheq)])
+  (http-do 'delete conn #:data data #:path path #:headers headers))
 
-(define (http-options conn [data (hasheq)]
-                   #:path [path ""]
-                   #:headers [headers (hasheq)])
-  (http-do 'options conn data #:path path #:headers headers))
+(define (http-options conn
+                      #:data [data (hasheq)]
+                      #:path [path ""]
+                      #:headers [headers (hasheq)])
+  (http-do 'options conn #:data data #:path path #:headers headers))
 
-(define (http-patch conn [data (hasheq)]
-                   #:path [path ""]
-                   #:headers [headers (hasheq)])
-  (http-do 'patch conn data #:path path #:headers headers))
+(define (http-patch conn
+                    #:data [data (hasheq)]
+                    #:path [path ""]
+                    #:headers [headers (hasheq)])
+  (http-do 'patch conn #:data data #:path path #:headers headers))
 
 
 
-(define (http-do method conn [data1 (hasheq)] ;; TODO: change to use #:data
+(define (http-do method conn
+                 #:data [data1 (hasheq)]
                  #:path [path ""]
                  #:headers [headers1 (hasheq)])
 
@@ -256,8 +270,9 @@
     (check-equal? (http-response-code res) 309))
 
 
-  (let* ([res (http-post conn1 (hasheq 'color "red")
+  (let* ([res (http-post conn1
                          #:path "/fruits"
+                         #:data (hasheq 'color "red")
                          #:headers (hasheq 'Token "temp-token-abcef"))]
          [req (http-response-request res)]
          [res-code (http-response-code res)]
@@ -295,6 +310,22 @@
     (check-equal? (hash-ref res-body 'data)
                   "price=10&made-in=China"))
 
-  ;; TODO: fix https://view.inews.qq.com/g2/getOnsInfo?name=disease_h5
-  ;; TODO: test body of the chinese web page like www.qq.com
+  (let* ([res (http-get (http-connection "https://httpbin.org/anything?fruit=apple" (hasheq) (hasheq)))]
+         [req (http-response-request res)]
+         [res-code (http-response-code res)]
+         [res-body (http-response-body res)])
+    (check-equal? res-code 200)
+    (check-equal? (hash-ref res-body 'data)
+                  "fruit=apple"))
+
+  (let* ([res (conn 'get #:path "/anything" #:data (hasheq 'fruit "apple"))]
+         [req (http-response-request res)]
+         [res-code (http-response-code res)]
+         [res-body (http-response-body res)])
+    (check-equal? res-code 200)
+    (check-equal? (hash-ref res-body 'data)
+                  "fruit=apple"))
+
+
+  ;; TODO: test body of the chinese web page like www.qq.com gb2312
   )
