@@ -6,6 +6,7 @@
          racket/port
          racket/match
          racket/format
+         racket/generic
          net/http-client
          net/uri-codec
          net/url-string
@@ -13,32 +14,9 @@
          xml
          html-parsing)
 
-(provide current-http-user-agent
-         current-http-response-auto
-         http-connection
-         http-connection-url
-         http-connection-headers
-         http-connection-data
-
-         http-request
-         http-request-url
-         http-request-headers
-         http-request-data
-
-         http-response
-         http-response-request
-         http-response-code
-         http-response-headers
-         http-response-body
-
-         ;; TODO: add contracts
-         http-get
-         http-head
-         http-post
-         http-put
-         http-delete
-         http-options
-         http-patch
+(provide (except-out (all-defined-out)
+                     format-kv)
+         ;; TODO: add contracts to http-get/post...
          )
 
 
@@ -47,57 +25,79 @@
 (define current-http-response-auto (make-parameter #t))
 
 
+(define-generics httpable
+  (http-get httpable)
+  (http-post httpable)
+  #:defaults ([string?
+               (define (http-get url
+                                 #:data [data (hasheq)]
+                                 #:path [path ""]
+                                 #:headers [headers (hasheq)])
+                 (define conn (http-connection url (hasheq) (hasheq)))
+                 (http-do 'get conn #:data data #:path path #:headers headers))
+
+               (define (http-post url
+                                  #:data [data (hasheq)]
+                                  #:path [path ""]
+                                  #:headers [headers (hasheq)])
+                 (define conn (http-connection url (hasheq) (hasheq)))
+                 (http-do 'post conn #:data data #:path path #:headers headers))]))
+
 (struct http-connection (url headers data)
   #:property prop:procedure
   (lambda (self method
            #:path [path ""]
            #:data [data (hasheq)]
            #:headers [headers (hasheq)])
-    (http-do 'get self #:data data #:path path #:headers headers))
+    (http-do method self #:data data #:path path #:headers headers))
+  #:methods gen:httpable
+  [(define (http-get self
+                     #:data [data (hasheq)]
+                     #:path [path ""]
+                     #:headers [headers (hasheq)])
+     (http-do 'get self #:data data #:path path #:headers headers))
+
+   (define (http-post self
+                      #:data [data (hasheq)]
+                      #:path [path ""]
+                      #:headers [headers (hasheq)])
+     (http-do 'post self #:data data #:path path #:headers headers))]
   #:methods gen:custom-write
   [(define (write-proc self port mode)
-     ;; TODO: define a global fmcl and use it for every struct.
-     (define (fmcl k v)
-       (define length (string-length (~a v)))
-       (define marker @~a{......[@length]})
-       @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
      (display @~a{#<http-connection
-                  @(fmcl "url" @(http-connection-url self))
-                  @(fmcl "headers" @(http-connection-headers self))
-                  @(fmcl "data" @(http-connection-data self))
-                  >} port))])
+                    @(format-kv "url" @(http-connection-url self))
+                    @(format-kv "headers" @(http-connection-headers self))
+                    @(format-kv "data" @(http-connection-data self))>}
+              port))]
+)
 
 ;; TODO: http-request should be derived from http-connection
 (struct http-request (url method headers data)
   #:methods gen:custom-write
   [(define (write-proc rqt port mode)
-     ;; TODO: seperated fmcl for every struct.
-     (define (fmcl k v)
-       (define length (string-length (~a v)))
-       (define marker @~a{......[@length]})
-       @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
-
      (display @~a{#<http-request
-                  @(fmcl "url" @(http-request-url rqt))
-                  @(fmcl "method" @(http-request-method rqt))
-                  @(fmcl "headers" @(http-request-headers rqt))
-                  @(fmcl "data" @(http-request-data rqt))
-                  >} port))])
+                    @(format-kv "url" @~a{@(http-request-method rqt) @(http-request-url rqt)})
+                    @(format-kv "headers" @(http-request-headers rqt))
+                    @(format-kv "data" @(http-request-data rqt))
+                  >} port))]
+  )
 
 (struct http-response (request code headers body)
   #:methods gen:custom-write
   [(define (write-proc self port mode)
      (define rqt (http-response-request self))
-     (define (fmcl k v)
-       (define length (string-length (~a v)))
-       (define marker @~a{......[@length]})
-       @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
      (display @~a{#<http-response
-                  #<request @(~v @(http-request-method rqt) @(http-request-url rqt)) ...>
-                  @(fmcl "code" @(http-response-code self))
-                  @(fmcl "headers" @(http-response-headers self))
-                  @(fmcl "body" @(http-response-body self))
-                  >} port))])
+                    @(format-kv "code" @(http-response-code self))
+                    #<request @~a{@(string-upcase (symbol->string (http-request-method rqt))) @(http-request-url rqt)} ...>
+                    @(format-kv "headers" @(http-response-headers self))
+                    @(format-kv "body" @(http-response-body self))>} port))]
+  )
+
+
+(define (format-kv k v)
+  (define length (string-length (~a v)))
+  (define marker @~a{......[@length]})
+  @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
 
 ;; TODO: make below be used.
 ;; (define-syntax define-http-method
@@ -105,50 +105,6 @@
 ;;     [(_ method)
 ;;      (define abc method)]))
 ;; (define-http-method 'get)
-
-(define (http-get conn
-                  #:data [data (hasheq)]
-                  #:path [path ""]
-                  #:headers [headers (hasheq)])
-  (http-do 'get conn #:data data #:path path #:headers headers))
-
-(define (http-head conn
-                   #:data [data (hasheq)]
-                   #:path [path ""]
-                   #:headers [headers (hasheq)])
-  (http-do 'head conn #:data data #:path path #:headers headers))
-
-(define (http-post conn
-                   #:data [data (hasheq)]
-                   #:path [path ""]
-                   #:headers [headers (hasheq)])
-  (http-do 'post conn #:data data #:path path #:headers headers))
-
-(define (http-put conn
-                  #:data [data (hasheq)]
-                  #:path [path ""]
-                  #:headers [headers (hasheq)])
-  (http-do 'put conn #:data data #:path path #:headers headers))
-
-(define (http-delete conn
-                     #:data [data (hasheq)]
-                     #:path [path ""]
-                     #:headers [headers (hasheq)])
-  (http-do 'delete conn #:data data #:path path #:headers headers))
-
-(define (http-options conn
-                      #:data [data (hasheq)]
-                      #:path [path ""]
-                      #:headers [headers (hasheq)])
-  (http-do 'options conn #:data data #:path path #:headers headers))
-
-(define (http-patch conn
-                    #:data [data (hasheq)]
-                    #:path [path ""]
-                    #:headers [headers (hasheq)])
-  (http-do 'patch conn #:data data #:path path #:headers headers))
-
-
 
 (define (http-do method conn
                  #:data [data1 (hasheq)]
