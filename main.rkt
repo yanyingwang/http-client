@@ -12,12 +12,27 @@
          net/url-string
          json
          xml
-         html-parsing)
+         html-parsing
+         (for-syntax racket/base)
+         )
 
 (provide (except-out (all-defined-out)
                      format-kv)
          ;; TODO: add contracts to http-get/post...
          )
+
+;; '(get head post put delete options patch)
+;; (define-syntax (define-http-methods stx)
+;;   (syntax-case stx ()
+;;     [(_ name)
+;;      #'(begin
+;;          (define (name conn
+;;                        #:data [data (hasheq)]
+;;                        #:path [path ""]
+;;                        #:headers [headers (hasheq)])
+;;            (http-do 'get conn #:data data #:path path #:headers headers)))]))
+
+;; (define-http-methods http-get)
 
 
 (define current-http-user-agent
@@ -87,8 +102,8 @@
   [(define (write-proc self port mode)
      (define rqt (http-response-request self))
      (display @~a{#<http-response
-                    @(format-kv "code" @(http-response-code self))
                     #<request @~a{@(string-upcase (symbol->string (http-request-method rqt))) @(http-request-url rqt)} ...>
+                    @(format-kv "code" @(http-response-code self))
                     @(format-kv "headers" @(http-response-headers self))
                     @(format-kv "body" @(http-response-body self))>} port))]
   )
