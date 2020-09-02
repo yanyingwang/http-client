@@ -28,37 +28,33 @@
   (make-parameter @~a{http-client[@(system-type)/@(system-type 'vm)-@(version)]}))
 (define current-http-response-auto (make-parameter #t))
 
-
-(define-syntax (define-http-methods/conn stx)
+(define-syntax (define-http-methods stx)
   (define names (cdr (syntax->datum stx)))
   (define code `(begin ,@(map (lambda (e)
                                 `(define (,(string->symbol (format "http-~a" e))
-                                          conn
+                                          url
                                           #:data [data (hasheq)]
                                           #:path [path ""]
                                           #:headers [headers (hasheq)])
-                                   (http-do ,e conn #:data data #:path path #:headers headers)))
+                                   (define conn
+                                     (if (string? url)
+                                         (http-connection url (hasheq) (hasheq))
+                                         url))
+                                   (http-do (quote ,e) conn #:data data #:path path #:headers headers)))
                               names)))
+  ;; (print code) ; debug
   (datum->syntax stx code))
+(define-http-methods get head post put delete options patch)
+;;;; code Example of (define-http-methods get)
+;; (define (http-get url #:data [data (hasheq)]
+;;                   #:path [path ""]
+;;                   #:headers [headers (hasheq)])
+;;   (define conn
+;;     (if (string? url)
+;;         (http-connection url (hasheq) (hasheq))
+;;         url))
+;;   (http-do 'get conn #:data data #:path path #:headers headers))
 
-(define-syntax (define-http-methods/string stx)
-  (define names (cdr (syntax->datum stx)))
-  (define code `(begin ,@(map (lambda (e)
-                                `(define (,(string->symbol (format "http-~a" e))
-                                          conn
-                                          #:data [data (hasheq)]
-                                          #:path [path ""]
-                                          #:headers [headers (hasheq)])
-                                   (define conn (http-connection url (hasheq) (hasheq)))
-                                   (http-do ,e conn #:data data #:path path #:headers headers)))
-                              names)))
-  (datum->syntax stx code))
-
-
-(define-generics httpable
-  (http-get httpable)
-  (http-post httpable)
-  #:defaults ([string? (define-http-methods/string get head post put delete options patch)]))
 
 (struct http-connection (url headers data)
   #:property prop:procedure
@@ -67,16 +63,13 @@
            #:data [data (hasheq)]
            #:headers [headers (hasheq)])
     (http-do method self #:data data #:path path #:headers headers))
-  #:methods gen:httpable
-  [(define-http-methods/conn get head post put delete options patch)]
   #:methods gen:custom-write
   [(define (write-proc self port mode)
      (display @~a{#<http-connection
                     @(format-kv "url" @(http-connection-url self))
                     @(format-kv "headers" @(http-connection-headers self))
                     @(format-kv "data" @(http-connection-data self))>}
-              port))]
-)
+              port))])
 
 ;; TODO: http-request should be derived from http-connection
 (struct http-request (url method headers data)
