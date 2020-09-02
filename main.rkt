@@ -13,26 +13,15 @@
          json
          xml
          html-parsing
-         (for-syntax racket/base)
-         )
+         (for-syntax racket/base racket/list))
 
 (provide (except-out (all-defined-out)
+                     define-http-methods/string
+                     define-http-methods/conn
                      format-kv)
          ;; TODO: add contracts to http-get/post...
          )
 
-;; '(get head post put delete options patch)
-;; (define-syntax (define-http-methods stx)
-;;   (syntax-case stx ()
-;;     [(_ name)
-;;      #'(begin
-;;          (define (name conn
-;;                        #:data [data (hasheq)]
-;;                        #:path [path ""]
-;;                        #:headers [headers (hasheq)])
-;;            (http-do 'get conn #:data data #:path path #:headers headers)))]))
-
-;; (define-http-methods http-get)
 
 
 (define current-http-user-agent
@@ -40,23 +29,36 @@
 (define current-http-response-auto (make-parameter #t))
 
 
+(define-syntax (define-http-methods/conn stx)
+  (define names (cdr (syntax->datum stx)))
+  (define code `(begin ,@(map (lambda (e)
+                                `(define (,(string->symbol (format "http-~a" e))
+                                          conn
+                                          #:data [data (hasheq)]
+                                          #:path [path ""]
+                                          #:headers [headers (hasheq)])
+                                   (http-do ,e conn #:data data #:path path #:headers headers)))
+                              names)))
+  (datum->syntax stx code))
+
+(define-syntax (define-http-methods/string stx)
+  (define names (cdr (syntax->datum stx)))
+  (define code `(begin ,@(map (lambda (e)
+                                `(define (,(string->symbol (format "http-~a" e))
+                                          conn
+                                          #:data [data (hasheq)]
+                                          #:path [path ""]
+                                          #:headers [headers (hasheq)])
+                                   (define conn (http-connection url (hasheq) (hasheq)))
+                                   (http-do ,e conn #:data data #:path path #:headers headers)))
+                              names)))
+  (datum->syntax stx code))
+
+
 (define-generics httpable
   (http-get httpable)
   (http-post httpable)
-  #:defaults ([string?
-               (define (http-get url
-                                 #:data [data (hasheq)]
-                                 #:path [path ""]
-                                 #:headers [headers (hasheq)])
-                 (define conn (http-connection url (hasheq) (hasheq)))
-                 (http-do 'get conn #:data data #:path path #:headers headers))
-
-               (define (http-post url
-                                  #:data [data (hasheq)]
-                                  #:path [path ""]
-                                  #:headers [headers (hasheq)])
-                 (define conn (http-connection url (hasheq) (hasheq)))
-                 (http-do 'post conn #:data data #:path path #:headers headers))]))
+  #:defaults ([string? (define-http-methods/string get head post put delete options patch)]))
 
 (struct http-connection (url headers data)
   #:property prop:procedure
@@ -66,17 +68,7 @@
            #:headers [headers (hasheq)])
     (http-do method self #:data data #:path path #:headers headers))
   #:methods gen:httpable
-  [(define (http-get self
-                     #:data [data (hasheq)]
-                     #:path [path ""]
-                     #:headers [headers (hasheq)])
-     (http-do 'get self #:data data #:path path #:headers headers))
-
-   (define (http-post self
-                      #:data [data (hasheq)]
-                      #:path [path ""]
-                      #:headers [headers (hasheq)])
-     (http-do 'post self #:data data #:path path #:headers headers))]
+  [(define-http-methods/conn get head post put delete options patch)]
   #:methods gen:custom-write
   [(define (write-proc self port mode)
      (display @~a{#<http-connection
@@ -108,18 +100,10 @@
                     @(format-kv "body" @(http-response-body self))>} port))]
   )
 
-
 (define (format-kv k v)
   (define length (string-length (~a v)))
   (define marker @~a{......[@length]})
   @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
-
-;; TODO: make below be used.
-;; (define-syntax define-http-method
-;;   (syntax-rules ()
-;;     [(_ method)
-;;      (define abc method)]))
-;; (define-http-method 'get)
 
 (define (http-do method conn
                  #:data [data1 (hasheq)]
