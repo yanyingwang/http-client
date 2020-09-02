@@ -1,6 +1,7 @@
 #lang at-exp racket/base
 
-(require racket/string
+(require racket/pretty
+         racket/string
          racket/list
          racket/hash
          racket/port
@@ -16,13 +17,10 @@
          (for-syntax racket/base racket/list))
 
 (provide (except-out (all-defined-out)
-                     define-http-methods/string
-                     define-http-methods/conn
+                     define-http-methods
                      format-kv)
          ;; TODO: add contracts to http-get/post...
          )
-
-
 
 (define current-http-user-agent
   (make-parameter @~a{http-client[@(system-type)/@(system-type 'vm)-@(version)]}))
@@ -55,7 +53,6 @@
 ;;         url))
 ;;   (http-do 'get conn #:data data #:path path #:headers headers))
 
-
 (struct http-connection (url headers data)
   #:property prop:procedure
   (lambda (self method
@@ -65,38 +62,35 @@
     (http-do method self #:data data #:path path #:headers headers))
   #:methods gen:custom-write
   [(define (write-proc self port mode)
-     (display @~a{#<http-connection
-                    @(format-kv "url" @(http-connection-url self))
-                    @(format-kv "headers" @(http-connection-headers self))
-                    @(format-kv "data" @(http-connection-data self))>}
+     (display @~a{#<http-connection @(format-kv "url" @(http-connection-url self)) @(format-kv "headers" @(http-connection-headers self)) @(format-kv "data" @(http-connection-data self))>}
               port))])
 
 ;; TODO: http-request should be derived from http-connection
 (struct http-request (url method headers data)
   #:methods gen:custom-write
   [(define (write-proc rqt port mode)
-     (display @~a{#<http-request
-                    @(format-kv "url" @~a{@(http-request-method rqt) @(http-request-url rqt)})
-                    @(format-kv "headers" @(http-request-headers rqt))
-                    @(format-kv "data" @(http-request-data rqt))
-                  >} port))]
-  )
+     (display @~a{#<http-request @(format-kv "url" @~a{@(http-request-method rqt) @(http-request-url rqt)}) @(format-kv "headers" @(http-request-headers rqt)) @(format-kv "data" @(http-request-data rqt))
+                  >} port))])
 
 (struct http-response (request code headers body)
   #:methods gen:custom-write
   [(define (write-proc self port mode)
      (define rqt (http-response-request self))
-     (display @~a{#<http-response
-                    #<request @~a{@(string-upcase (symbol->string (http-request-method rqt))) @(http-request-url rqt)} ...>
-                    @(format-kv "code" @(http-response-code self))
-                    @(format-kv "headers" @(http-response-headers self))
-                    @(format-kv "body" @(http-response-body self))>} port))]
-  )
+     (define rqt-txt @~a{@(string-upcase (symbol->string (http-request-method rqt))) @(http-request-url rqt)})
+     (parameterize ([pretty-print-depth 1])
+       (display @~a{#<http-response #<request @|rqt-txt|> @(format-kv "code" @(http-response-code self)) @(pp-kv "headers" @(http-response-headers self)) @(pp-kv "body" @(http-response-body self))>} port))
+     )])
 
 (define (format-kv k v)
   (define length (string-length (~a v)))
   (define marker @~a{......[@length]})
   @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
+
+(define (pp-kv k v)
+  (parameterize ([pretty-print-depth 1])
+    @~a{@|k|: @(pretty-format v)}))
+
+
 
 (define (http-do method conn
                  #:data [data1 (hasheq)]
@@ -181,8 +175,6 @@
       [_ res-body-raw]))
 
   (http-response req res-code res-headers res-body))
-
-
 
 
 (module+ test
@@ -273,7 +265,6 @@
     (check-equal? res-code 200)
     (check-equal? (hash-ref res-body 'data)
                   "fruit=apple"))
-
 
   ;; TODO: test body of the chinese web page like www.qq.com gb2312
   )
