@@ -71,16 +71,14 @@
 (struct http-request (url method headers data)
   #:methods gen:custom-write
   [(define (write-proc rqt port mode)
-     (display @~a{#<http-request @(format-kv "url" @~a{@(http-request-method rqt) @(http-request-url rqt)}) @(pp-kv "headers" @(http-request-headers rqt)) @(pp-kv "data" @(http-request-data rqt))
-                  >} port))])
+     (display @~a{#<http-request @(string-upcase (~a (http-request-method rqt))) @(~v (http-request-url rqt)) @(pp-kv "headers" @(http-request-headers rqt)) @(pp-kv "data" @(http-request-data rqt))>} port))])
 
 (struct http-response (request code headers body)
   #:methods gen:custom-write
   [(define (write-proc self port mode)
      (define rqt (http-response-request self))
-     (define rqt-txt @~a{@(string-upcase (symbol->string (http-request-method rqt))) @(http-request-url rqt)})
-     (parameterize ([pretty-print-depth 1])
-       (pretty-display @~a{#<http-response #<request @|rqt-txt|> @(format-kv "code" @(http-response-code self)) @(pp-kv "headers" @(http-response-headers self)) @(pp-kv "body" @(http-response-body self))>} port)))])
+     (define rqt-txt @~a{@(string-upcase (~a (http-request-method rqt))) @(~v (http-request-url rqt))})
+     (display @~a{#<http-response #<request @|rqt-txt|> @(pp-kv "code" @(http-response-code self)) @(pp-kv "headers" @(http-response-headers self)) @(pp-kv "body" @(http-response-body self))>} port))])
 
 (define (format-kv k v)
   (define length (string-length (~a v)))
