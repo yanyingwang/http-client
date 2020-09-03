@@ -18,7 +18,8 @@
 
 (provide (except-out (all-defined-out)
                      define-http-methods
-                     format-kv)
+                     format-kv
+                     pp-kv)
          ;; TODO: add contracts to http-get/post...
          )
 
@@ -43,6 +44,7 @@
   ;; (print code) ; debug
   (datum->syntax stx code))
 (define-http-methods get head post put delete options patch)
+
 ;;;; code Example of (define-http-methods get)
 ;; (define (http-get url #:data [data (hasheq)]
 ;;                   #:path [path ""]
@@ -62,14 +64,14 @@
     (http-do method self #:data data #:path path #:headers headers))
   #:methods gen:custom-write
   [(define (write-proc self port mode)
-     (display @~a{#<http-connection @(format-kv "url" @(http-connection-url self)) @(format-kv "headers" @(http-connection-headers self)) @(format-kv "data" @(http-connection-data self))>}
+     (display @~a{#<http-connection @(format-kv "url" @(http-connection-url self)) @(pp-kv "headers" @(http-connection-headers self)) @(pp-kv "data" @(http-connection-data self))>}
               port))])
 
 ;; TODO: http-request should be derived from http-connection
 (struct http-request (url method headers data)
   #:methods gen:custom-write
   [(define (write-proc rqt port mode)
-     (display @~a{#<http-request @(format-kv "url" @~a{@(http-request-method rqt) @(http-request-url rqt)}) @(format-kv "headers" @(http-request-headers rqt)) @(format-kv "data" @(http-request-data rqt))
+     (display @~a{#<http-request @(format-kv "url" @~a{@(http-request-method rqt) @(http-request-url rqt)}) @(pp-kv "headers" @(http-request-headers rqt)) @(pp-kv "data" @(http-request-data rqt))
                   >} port))])
 
 (struct http-response (request code headers body)
@@ -78,8 +80,7 @@
      (define rqt (http-response-request self))
      (define rqt-txt @~a{@(string-upcase (symbol->string (http-request-method rqt))) @(http-request-url rqt)})
      (parameterize ([pretty-print-depth 1])
-       (display @~a{#<http-response #<request @|rqt-txt|> @(format-kv "code" @(http-response-code self)) @(pp-kv "headers" @(http-response-headers self)) @(pp-kv "body" @(http-response-body self))>} port))
-     )])
+       (pretty-display @~a{#<http-response #<request @|rqt-txt|> @(format-kv "code" @(http-response-code self)) @(pp-kv "headers" @(http-response-headers self)) @(pp-kv "body" @(http-response-body self))>} port)))])
 
 (define (format-kv k v)
   (define length (string-length (~a v)))
@@ -89,8 +90,6 @@
 (define (pp-kv k v)
   (parameterize ([pretty-print-depth 1])
     @~a{@|k|: @(pretty-format v)}))
-
-
 
 (define (http-do method conn
                  #:data [data1 (hasheq)]
