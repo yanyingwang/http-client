@@ -27,6 +27,7 @@
   (make-parameter @~a{http-client[@(system-type)/@(system-type 'vm)-@(version)]}))
 (define current-http-response-auto (make-parameter #t))
 
+;; TODO: enhance below syntax defining code with syntax-case/parse....
 (define-syntax (define-http-methods stx)
   (define names (cdr (syntax->datum stx)))
   (define code `(begin ,@(map (lambda (e)
@@ -64,7 +65,7 @@
     (http-do method self #:data data #:path path #:headers headers))
   #:methods gen:custom-write
   [(define (write-proc self port mode)
-     (display @~a{#<http-connection @(format-kv "url" @(http-connection-url self)) @(pp-kv "headers" @(http-connection-headers self)) @(pp-kv "data" @(http-connection-data self))>}
+     (display @~a{#<http-connection @(http-connection-url self) @(pp-kv "headers" @(http-connection-headers self)) @(pp-kv "data" @(http-connection-data self))>}
               port))])
 
 ;; TODO: http-request should be derived from http-connection

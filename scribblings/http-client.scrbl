@@ -11,13 +11,8 @@
 
 
 @defmodule[http-client]
-
 A practical http client library for sending data to http servers.
-
-Still under contruction....
-
 @[table-of-contents]
-
 
 
 @section{Example}
@@ -25,50 +20,60 @@ Still under contruction....
 (examples
 #:eval (sanbox-eval)
 
-(define conn
+(http-get "https://httpbin.org"
+          #:path "anything/fruits"
+          #:data (hasheq 'color "red" 'made-in "China" 'price 10)
+          #:headers (hasheq 'Accept "application/json" 'Token "temp-token-abcef"))
+
+(define httpbin-org
     (http-connection "https://httpbin.org/anything"
                      (hasheq 'Accept "application/json")
                      (hasheq 'made-in "China" 'price 10)))
 
-(define res
-  (http-post conn (hasheq 'color "red")
-             #:path "/fruits"
-             #:headers (hasheq 'Token "temp-token-abcef")))
+(http-bin-org 'get
+              #:path "/fruits"
+              #:data (hasheq 'color "red")
+              #:headers (hasheq 'Token "temp-token-abcef"))
 
-(http-response-code res)
-(http-response-headers res)
-;; http response body is auto converted to the racket types.
-(http-response-body res)
+(http-post httpbin-org
+           #:data (hasheq 'color "red")
+           #:path "/fruits"
+           #:headers (hasheq 'Token "temp-token-abcef"))
 
+(http-post httpbin-org  ;; change the headers to do the post using html form format.
+           #:headers (hasheq 'Accept "application/x-www-form-urlencoded"))
 
-;; change the headers to do the post with html form
-(define res1
-  (http-post conn
-             #:headers (hasheq 'Accept "application/x-www-form-urlencoded")))
-(http-response-body res1)
-
-
-;; do html form post with copying and changing a pre defined conn's headers
+(code:line
 (define new-conn
-  (struct-copy http-connection conn
+  (struct-copy http-connection httpbin-org ;;  copying and changing a predefined conn and headers to do a post using html form.
                [headers (hasheq 'Accept "application/x-www-form-urlencoded")]))
 (http-post new-conn)
+)
 
+(code:line
+(define res (http-post "https://httpbin.org/anything"
+                       #:data (hasheq 'color "red")))
+(http-response-body res) ;; the body of a response is auto converted to the racket type data unless you set @racket[current-http-response-auto].
+)
 
-;; set current-http-response-auto to #f to get a raw format http response body.
-(parameterize ([current-http-response-auto #f])
-  (http-response-body (http-get conn)))
+(parameterize ([current-http-response-auto #f]) ;; set @racket[current-http-response-auto] to #f to get a raw format http response body.
+  (define res (http-post "https://httpbin.org/anything"
+                         #:data (hasheq 'color "red")))
+  (http-response-body res))
 
 )
 
-
 @section{Reference}
+...
+...
+...
 
 @section{Bug Report}
-Please create an issue for this repo on the Github.
-
+Please go to github and create an issue for this repo.
 
 @section{TODO}
-@itemlist[@item{optimize the shown of struct in terminal, missing double quotation marks when content is too long}
-          @item{add contracts to provide funcs}
-          @item{fix TODOs comments of code}]
+@itemlist[
+@item{global param of debug mode to show request and response log msg just like the ruby faraday.}
+@item{define a global param for pretty-print-depth for write-proc to show customized depth.}
+@item{make param of hasheq can also be alist and dict data.}
+]
