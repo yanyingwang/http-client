@@ -60,18 +60,99 @@ A practical http client library for sending data to http servers.
   (define res (http-post "https://httpbin.org/anything"
                          #:data (hasheq 'color "red")))
   (http-response-body res))
-
 )
 
 @section{Reference}
-...
-...
-...
+@defparam[current-http-user-agent v string?
+          #:value string]{
+set the user agent which is used by the time of doing the request to http server.
+}
+
+@defparam[current-http-response-auto v boolean?
+          #:value #t]{
+set it to false to disable the auto convertion of the response's body data.
+}
+
+@defstruct*[http-connection ([url string?]
+                             [headers hasheq]
+                             [data hasheq])]{
+  construct a http-connection instance and use it with such as @racket[http-get] when you want to request the same website with similar data.
+}
+
+@defstruct*[http-response ([request http-request?]
+                           [code number?]
+                           [headers hasheq]
+                           [body hasheq])]{
+  You will get a http-response struct instance if you're doing a request using this lib's function such as @racket[http-get].
+}
+
+@defstruct*[http-request ([url string?]
+                          [method symbol?]
+                          [headers hasheq]
+                          [data hasheq])]{
+  for the most common time, http-request is included in the @racket[http-response] instance.
+}
+
+
+
+@defproc[(send-smtp-mail [email mail?]
+                    [#:host host string? (current-smtp-host)]
+                    [#:port port integer? (current-smtp-port)]
+                    [#:user username string? (current-smtp-username)]
+                    [#:password password string? (current-smtp-password)])
+
+                    void?]{
+commit the @italic{email} sending action.
+}
+
+@defproc[(http-get [conn (or/c string? http-connection?)]
+                   [#:data data hasheq (hasheq)]
+                   [#:path path string? ""]
+                   [#:headers headers hasheq (hasheq)])
+         http-resonse?]{
+request a website with get method.
+}
+
+@defthing[http-post http-respone?]{
+same as @racket[http-get] except of doing a not get method request.
+}
+
+@defthing[http-head http-respone?]{
+same as @racket[http-get] except of doing a not get method request.
+}
+
+@defthing[http-options http-respone?]{
+same as @racket[http-get] except of doing a not get method request.
+}
+
+@defthing[http-put http-respone?]{
+same as @racket[http-get] except of doing a not get method request.
+}
+
+@defthing[http-delete http-respone?]{
+same as @racket[http-get] except of doing a not get method request.
+}
+
+@defthing[http-patch http-respone?]{
+same as @racket[http-get] except of doing a not get method request.
+}
+
+
+
+@defproc[(http-do [method symbol?] [conn http-connection?]
+                  [#:data data hasheq (hasheq)]
+                  [#:path path string? ""]
+                  [#:headers headers hasheq (hasheq)])
+http-response?]{
+a low level function to do the http request.
+}
+
+
 
 @section{Bug Report}
 Please go to github and create an issue for this repo.
 
-@section{TODO}
+@section{TODOs}
 @itemlist[
 @item{global param of debug mode to show request and response log msg just like the ruby faraday.}
 @item{define a global param for pretty-print-depth for write-proc to show customized depth.}

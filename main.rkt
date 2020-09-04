@@ -65,7 +65,7 @@
     (http-do method self #:data data #:path path #:headers headers))
   #:methods gen:custom-write
   [(define (write-proc self port mode)
-     (display @~a{#<http-connection @(http-connection-url self) @(pp-kv "headers" @(http-connection-headers self)) @(pp-kv "data" @(http-connection-data self))>}
+     (display @~a{#<http-connection @(~v (http-connection-url self)) @(pp-kv "headers" @(http-connection-headers self)) @(pp-kv "data" @(http-connection-data self))>}
               port))])
 
 ;; TODO: http-request should be derived from http-connection
