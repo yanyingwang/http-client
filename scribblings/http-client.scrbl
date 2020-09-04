@@ -4,7 +4,8 @@
           scribble/eval]
 
 @(define sanbox-eval
-   (make-eval-factory '(http-client)))
+   (make-eval-factory '(http-client)
+   [#:pretty-print? #f]))
 
 @title{http-client}
 @author[(author+email "Yanying Wang" "yanyingwang1@gmail.com")]
