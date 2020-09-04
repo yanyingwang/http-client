@@ -4,8 +4,7 @@
           scribble/eval]
 
 @(define sanbox-eval
-   (make-eval-factory '(http-client)
-   [#:pretty-print? #f]))
+   (make-eval-factory '(http-client)))
 
 @title{http-client}
 @author[(author+email "Yanying Wang" "yanyingwang1@gmail.com")]
@@ -92,18 +91,6 @@ set it to false to disable the auto convertion of the response's body data.
                           [headers hasheq]
                           [data hasheq])]{
   for the most common time, http-request is included in the @racket[http-response] instance.
-}
-
-
-
-@defproc[(send-smtp-mail [email mail?]
-                    [#:host host string? (current-smtp-host)]
-                    [#:port port integer? (current-smtp-port)]
-                    [#:user username string? (current-smtp-username)]
-                    [#:password password string? (current-smtp-password)])
-
-                    void?]{
-commit the @italic{email} sending action.
 }
 
 @defproc[(http-get [conn (or/c string? http-connection?)]
