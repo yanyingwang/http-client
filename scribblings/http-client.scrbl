@@ -40,12 +40,12 @@ A practical http client library for sending data to http servers.
            #:path "/fruits"
            #:headers (hasheq 'Token "temp-token-abcef"))
 
-(http-post httpbin-org  ;; change the headers to do the post using html form format.
+(http-post httpbin-org  ;; modify the headers to do the post using html form format.
            #:headers (hasheq 'Accept "application/x-www-form-urlencoded"))
 
 (code:line
 (define new-conn
-  (struct-copy http-connection httpbin-org ;;  copying and changing a predefined conn and headers to do a post using html form.
+  (struct-copy http-connection httpbin-org ;;  copying and modifying a predefined conn and headers to do a post using html form.
                [headers (hasheq 'Accept "application/x-www-form-urlencoded")]))
 (http-post new-conn)
 )
