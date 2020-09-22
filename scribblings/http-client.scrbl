@@ -27,7 +27,7 @@ A practical http client library for sending data to http servers.
 
 (define httpbin-org
     (http-connection "https://httpbin.org/anything"
-                     (hasheq 'Accept "application/json")
+                     (hasheq 'Content-Type "application/json" 'Accept "application/json")
                      (hasheq 'made-in "China" 'price 10)))
 
 (http-bin-org 'get
@@ -41,12 +41,12 @@ A practical http client library for sending data to http servers.
            #:headers (hasheq 'Token "temp-token-abcef"))
 
 (http-post httpbin-org  ;; modify the headers to do the post using html form format.
-           #:headers (hasheq 'Accept "application/x-www-form-urlencoded"))
+           #:headers (hasheq 'Content-Type "application/x-www-form-urlencoded"))
 
 (code:line
 (define new-conn
   (struct-copy http-connection httpbin-org ;;  copying and modifying a predefined conn and headers to do a post using html form.
-               [headers (hasheq 'Accept "application/x-www-form-urlencoded")]))
+               [headers (hasheq 'Content-Type "application/x-www-form-urlencoded")]))
 (http-post new-conn)
 )
 

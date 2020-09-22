@@ -99,6 +99,7 @@
   (define data2 (http-connection-data conn))
   (define data3 (make-hash (url-query url)))
   (define headers2 (http-connection-headers conn))
+
   (define req-path1
     (for/list ([e (url-path url)])
       (string-append "/" (path/param-path e))))
@@ -119,7 +120,7 @@
   (define req (http-request (string-append (url-scheme url)
                                            "://"
                                            req-host
-                                           (if (url-port url) (url-port url) "")
+                                           (if (url-port url) (number->string (url-port url)) "")
                                            req-path)
                             method req-headers req-data))
 
@@ -181,7 +182,7 @@
   (define conn
     (http-connection "https://httpbin.org" (hasheq) (hasheq)))
   (define conn1
-    (http-connection "https://httpbin.org/anything" (hasheq 'Accept "application/json") (hasheq 'made-in "China" 'price 10)))
+    (http-connection "https://httpbin.org/anything" (hasheq 'Content-Type "application/json" 'Accept "application/json") (hasheq 'made-in "China" 'price 10)))
 
 
   (check-true (current-http-response-auto))
