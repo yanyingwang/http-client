@@ -86,9 +86,10 @@
   (define marker @~a{......[@length]})
   @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
 
+(pretty-print-depth 1)
 (define (pp-kv k v)
-  (parameterize ([pretty-print-depth 1])
-    @~a{@|k|: @(pretty-format v)}))
+  @~a{@|k|: @(pretty-format v 'infinity)})
+(pretty-print-size-hook (lambda (a b c) 1))
 
 (define (http-do method conn
                  #:data [data1 (hasheq)]
