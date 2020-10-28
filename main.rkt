@@ -89,7 +89,7 @@
 (pretty-print-depth 1)
 (define (pp-kv k v)
   @~a{@|k|: @(pretty-format v 'infinity)})
-(pretty-print-size-hook (lambda (a b c) 1))
+;; (pretty-print-size-hook (lambda (a b c) 1))
 
 (define (http-do method conn
                  #:data [data1 (hasheq)]
