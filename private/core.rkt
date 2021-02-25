@@ -1,7 +1,7 @@
 #lang at-exp racket/base
 
 (require racket/string racket/list racket/hash racket/port
-         racket/match racket/format #;racket/pretty
+         racket/match racket/format
          net/http-client net/uri-codec net/url-string
          json xml html-parsing
          (file "./params.rkt") (file "./utils.rkt"))
@@ -17,13 +17,13 @@
     (http-do method self #:data data #:path path #:headers headers))
   #:methods gen:custom-write
   [(define (write-proc self port mode)
-     (http-client-display @~a{#<http-connection @(~v (http-connection-url self)) @(http-client-pp-kv "headers" @(http-connection-headers self)) @(http-client-pp-kv "data" @(http-connection-data self))>} port))])
+     (display @~a{#<http-connection @(~v (http-connection-url self)) @(http-client-pp-kv "headers" @(http-connection-headers self)) @(http-client-pp-kv "data" @(http-connection-data self))>} port))])
 
 ;; TODO: http-request should be derived from http-connection
 (struct http-request (url method headers data)
   #:methods gen:custom-write
   [(define (write-proc rqt port mode)
-     (http-client-display @~a{#<http-request @(string-upcase (~a (http-request-method rqt))) @(~v (http-request-url rqt)) @(http-client-pp-kv "headers" @(http-request-headers rqt)) @(http-client-pp-kv "data" @(http-request-data rqt))>} port)
+     (display @~a{#<http-request @(string-upcase (~a (http-request-method rqt))) @(~v (http-request-url rqt)) @(http-client-pp-kv "headers" @(http-request-headers rqt)) @(http-client-pp-kv "data" @(http-request-data rqt))>} port)
      )])
 
 (struct http-response (request code headers body)
@@ -31,7 +31,7 @@
   [(define (write-proc self port mode)
      (define rqt (http-response-request self))
      (define rqt-txt @~a{@(string-upcase (~a (http-request-method rqt))) @(~v (http-request-url rqt))})
-     (http-client-display @~a{#<http-response #<request @|rqt-txt|> @(http-client-pp-kv "code" @(http-response-code self)) @(http-client-pp-kv "headers" @(http-response-headers self)) @(http-client-pp-kv "body" @(http-response-body self))>} port))])
+     (display @~a{#<http-response #<request @|rqt-txt|> @(http-client-pp-kv "code" @(http-response-code self)) @(http-client-pp-kv "headers" @(http-response-headers self)) @(http-client-pp-kv "body" @(http-response-body self))>} port))])
 
 
 (define (http-do method conn
