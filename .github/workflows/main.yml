@@ -24,7 +24,13 @@ jobs:
           raco pkg install --auto
       - name: build docs
         run: |
-          raco scribble --dest docs --dest-name index ++main-xref-in --redirect-main https://docs.racket-lang.org/ scribblings/http-client.scrbl
+          raco scribble \
+          --htmls \
+          --dest-name docs \
+          ++main-xref-in \
+          --redirect-main https://docs.racket-lang.org/ \
+          --redirect https://docs.racket-lang.org/local-redirect/index.html \
+          scribblings/http-client.scrbl
       - name: Deploy to GitHub Pages
         if: success()
         uses: crazy-max/ghaction-github-pages@v1.2.5
