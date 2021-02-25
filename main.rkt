@@ -1,31 +1,13 @@
 #lang at-exp racket/base
 
-(require racket/pretty
-         racket/string
-         racket/list
-         racket/hash
-         racket/port
-         racket/match
-         racket/format
-         racket/generic
-         net/http-client
-         net/uri-codec
-         net/url-string
-         json
-         xml
-         html-parsing
-         (for-syntax racket/base racket/list))
+(require racket/generic
+         (for-syntax racket/base racket/list)
+         (file "./private/params.rkt")
+         (file "./private/core.rkt"))
+(provide (except-out (all-defined-out) define-http-methods) ;; TODO: add contracts to http-get/post...
+         (all-from-out (file "./private/params.rkt"))
+         (all-from-out (file "./private/core.rkt")))
 
-(provide (except-out (all-defined-out)
-                     define-http-methods
-                     format-kv
-                     pp-kv)
-         ;; TODO: add contracts to http-get/post...
-         )
-
-(define current-http-user-agent
-  (make-parameter @~a{http-client[@(system-type)/@(system-type 'vm)-@(version)]}))
-(define current-http-response-auto (make-parameter #t))
 
 ;; TODO: enhance below syntax defining code with syntax-case/parse....
 (define-syntax (define-http-methods stx)
@@ -46,7 +28,7 @@
   (datum->syntax stx code))
 (define-http-methods get head post put delete options patch)
 
-;;;; code Example of (define-http-methods get)
+;;;;;;; code Example of (define-http-methods get)
 ;; (define (http-get url #:data [data (hasheq)]
 ;;                   #:path [path ""]
 ;;                   #:headers [headers (hasheq)])
@@ -56,127 +38,9 @@
 ;;         url))
 ;;   (http-do 'get conn #:data data #:path path #:headers headers))
 
-(struct http-connection (url headers data)
-  #:property prop:procedure
-  (lambda (self method
-           #:path [path ""]
-           #:data [data (hasheq)]
-           #:headers [headers (hasheq)])
-    (http-do method self #:data data #:path path #:headers headers))
-  #:methods gen:custom-write
-  [(define (write-proc self port mode)
-     (display @~a{#<http-connection @(~v (http-connection-url self)) @(pp-kv "headers" @(http-connection-headers self)) @(pp-kv "data" @(http-connection-data self))>}
-              port))])
-
-;; TODO: http-request should be derived from http-connection
-(struct http-request (url method headers data)
-  #:methods gen:custom-write
-  [(define (write-proc rqt port mode)
-     (display @~a{#<http-request @(string-upcase (~a (http-request-method rqt))) @(~v (http-request-url rqt)) @(pp-kv "headers" @(http-request-headers rqt)) @(pp-kv "data" @(http-request-data rqt))>} port))])
-
-(struct http-response (request code headers body)
-  #:methods gen:custom-write
-  [(define (write-proc self port mode)
-     (define rqt (http-response-request self))
-     (define rqt-txt @~a{@(string-upcase (~a (http-request-method rqt))) @(~v (http-request-url rqt))})
-     (display @~a{#<http-response #<request @|rqt-txt|> @(pp-kv "code" @(http-response-code self)) @(pp-kv "headers" @(http-response-headers self)) @(pp-kv "body" @(http-response-body self))>} port))])
-
-(define (format-kv k v)
-  (define length (string-length (~a v)))
-  (define marker @~a{......[@length]})
-  @~a{@|k|: @(~v @v #:max-width 128 #:limit-marker @marker)})
-
-(pretty-print-depth 1)
-(define (pp-kv k v)
-  @~a{@|k|: @(pretty-format v 'infinity)})
-;; (pretty-print-size-hook (lambda (a b c) 1))
-
-(define (http-do method conn
-                 #:data [data1 (hasheq)]
-                 #:path [path ""]
-                 #:headers [headers1 (hasheq)])
-
-  (define url (string->url (http-connection-url conn)))
-  (define data2 (http-connection-data conn))
-  (define data3 (make-hash (url-query url)))
-  (define headers2 (http-connection-headers conn))
-
-  (define req-path1
-    (for/list ([e (url-path url)])
-      (string-append "/" (path/param-path e))))
-  (define req-path2
-    (for/list ([e (string-split path "/")])
-      (string-append "/" e)))
-  (define req-path1&2 (append req-path1 req-path2))
-
-  (define req-host (url-host url))
-  (define req-path (if (empty? req-path1&2)
-                       "/"
-                       (string-join req-path1&2 "")))
-
-  (define req-headers (hash-union headers1 headers2 (hasheq 'User-Agent (current-http-user-agent))
-                                  #:combine/key (lambda (k v1 v2) v1)))
-  (define req-data (hash-union data1 data2 data3
-                               #:combine/key (lambda (k v1 v2) v1)))
-  (define req (http-request (string-append (url-scheme url)
-                                           "://"
-                                           req-host
-                                           (if (url-port url) (number->string (url-port url)) "")
-                                           req-path)
-                            method req-headers req-data))
-
-  (define req-headers-raw
-    (hash-map req-headers
-              (lambda (k v) (~a k ": " v))))
-  (define req-data-raw
-    (match req-headers
-      ;; [(? hash-empty?) ""]
-      [(hash-table ('Accept "application/json")) (jsexpr->string req-data)]
-      ;; [(hash-table ('Accept "application/x-www-form-urlencoded")) (alist->form-urlencoded (hash->list req-data))]
-      [_ (alist->form-urlencoded (hash-map req-data
-                                           (lambda (k v)
-                                             (cons k (if (number? v)
-                                                         (number->string v)
-                                                         v)))))]))
-
-  (define-values (res-status-raw res-headers-raw res-in)
-    (http-sendrecv req-host req-path
-                   #:ssl? (match (url-scheme url) ["https" #t] [_ #f])
-                   #:method (string-upcase (symbol->string method))
-                   #:port (match (url-port url)
-                            [(? integer? n) n]
-                            [#f #:when (string=? (url-scheme url) "https")
-                             443]
-                            [_ 80])
-                   #:headers req-headers-raw
-                   #:data req-data-raw))
-  (define res-body-raw (port->string res-in))
-
-  (define res-code
-    (string->number (second (string-split (bytes->string/utf-8 res-status-raw)))))
-  (define res-headers
-    (for/hasheq ([e res-headers-raw])
-      (match (string-split (bytes->string/utf-8 e) ":")
-        [(list-rest a b)
-         (define k (string->symbol a))
-         (define v (string-trim (string-join b)))
-         (values k v)])))
-
-  (define res-body
-    (match res-headers
-      [_ #:when (not (current-http-response-auto))
-         res-body-raw]
-      [(hash-table ('Content-Type (regexp #rx"^application/json.*")))
-       (string->jsexpr res-body-raw)]
-      [(hash-table ('Content-Type (regexp #rx"^text/html.*")))
-       (html->xexp res-body-raw)]
-      [(hash-table ('Content-Type (regexp #rx"^(application/xml|text/xml|application/xhtml+xml).*")))
-       (string->xexpr res-body-raw)]
-      [_ res-body-raw]))
-
-  (http-response req res-code res-headers res-body))
 
 
+;;;;  =========> test :::
 (module+ test
   (require rackunit)
 
@@ -186,7 +50,7 @@
     (http-connection "https://httpbin.org/anything" (hasheq 'Content-Type "application/json" 'Accept "application/json") (hasheq 'made-in "China" 'price 10)))
 
 
-  (check-true (current-http-response-auto))
+  (check-true (current-http-client/response-auto))
 
   (let* ([res (http-get conn)]
          [res-headers (http-response-headers res)]
@@ -196,8 +60,8 @@
                   "text/html; charset=utf-8")
     (check-true (list? (http-response-body res))))
 
-  (parameterize ([current-http-response-auto #f])
-    (check-false (current-http-response-auto))
+  (parameterize ([current-http-client/response-auto #f])
+    (check-false (current-http-client/response-auto))
     (define res (http-get conn))
     (define res-headers (http-response-headers res))
     (define res-body (http-response-body res))
