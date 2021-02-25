@@ -57,25 +57,30 @@
                                   #:combine/key (lambda (k v1 v2) v1)))
   (define req-data (hash-union data1 data2 data3
                                #:combine/key (lambda (k v1 v2) v1)))
-  (define req (http-request (string-append (url-scheme url)
-                                           "://"
-                                           req-host
-                                           (if (url-port url) (number->string (url-port url)) "")
-                                           req-path)
-                            method req-headers req-data))
   (define req-headers-raw
     (hash-map req-headers
               (lambda (k v) (~a k ": " v))))
   (define req-data-raw
     (match req-headers
       ;; [(? hash-empty?) ""]
-      [(hash-table ('Accept "application/json")) (jsexpr->string req-data)]
+      [(hash-table ('Content-Type "application/json")) (jsexpr->string req-data)]
       ;; [(hash-table ('Accept "application/x-www-form-urlencoded")) (alist->form-urlencoded (hash->list req-data))]
       [_ (alist->form-urlencoded (hash-map req-data
                                            (lambda (k v)
                                              (cons k (if (number? v)
                                                          (number->string v)
                                                          v)))))]))
+  (when (eq? method 'get)
+    (set! req-path (string-append req-path "?" req-data-raw))
+    (set! req-data-raw ""))
+  (define req
+    (http-request (string-append (url-scheme url)
+                                 "://"
+                                 req-host
+                                 (if (url-port url) (number->string (url-port url)) "")
+                                 req-path)
+                  method req-headers req-data))
+
   (define-values (res-status-raw res-headers-raw res-in)
     (http-sendrecv req-host req-path
                    #:ssl? (match (url-scheme url) ["https" #t] [_ #f])

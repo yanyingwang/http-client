@@ -12,3 +12,4 @@ http-client
 
 check more doc at: https://yanyingwang.github.io/http-client/ or https://docs.racket-lang.org/http-client/index.html
 
+https://developer.mozilla.org/en-US/docs/Web/HTTP
