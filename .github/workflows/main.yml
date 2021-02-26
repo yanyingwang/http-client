@@ -25,8 +25,8 @@ jobs:
       - name: build docs
         run: |
           raco scribble \
-          --htmls \
-          --dest-name docs \
+          --dest docs \
+          --dest-name index \
           ++main-xref-in \
           --redirect-main https://docs.racket-lang.org/ \
           --redirect https://docs.racket-lang.org/local-redirect/index.html \
