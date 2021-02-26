@@ -12,4 +12,4 @@
   (make-parameter #t))
 
 (define current-http-client/user-agent
-  (make-parameter @~a{http-client[@(system-type)/@(system-type 'vm)-@(version)]}))
+  (make-parameter @~a{http-client[@(system-type)/@(system-type 'vm)/@(version)]}))

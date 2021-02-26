@@ -16,7 +16,7 @@ A practical Racket HTTP client for interacting data with HTTP servers.
 @table-of-contents[]
 
 
-@section{Common Usage Example}
+@section[#:tag "common-usage-example"]{Common Usage Example}
 @subsection{Explicitly request URLs}
 Request @litchar{https://httpbin.org/anything/fruits?color=red&made-in=China&price=10} with setting request headers @litchar{Token: your-token} in Racket would be like below:
 @codeblock|{
@@ -26,7 +26,7 @@ Request @litchar{https://httpbin.org/anything/fruits?color=red&made-in=China&pri
           #:headers (hasheq 'Token "your-token"))
 }|
 
-@subsection{Request nuance URLs}
+@subsection[#:tag "request-nuance-urls"]{Request nuance URLs}
 You can define a @racket[http-connection], and use it to do requests with modifying some details of it.
 
 @subsubsection{Define connections}
@@ -99,116 +99,116 @@ do a POST request with copying and modifying the predefined @racket[http-connect
 
 
 @section{Reference}
+@subsection{Parameters}
+@defparam[current-http-client/user-agent v string? #:value "http-client[your-system-name/your-vm-sytem-type-name/your-racket-version]"]{
+The user agent name used by requesting the HTTP servers.
+}
 
-@deftogether[(
-@defparam[current-http-client/user-agent v string? #:value "http-client[system-name/vm-name-racket-version]"]
-@defparam[current-http-client/response-auto v boolean? #:value #t]
-@defparam[current-http-client/pretty-print-depth v integer? #:value 1]
+@defparam[current-http-client/response-auto v boolean? #:value #t]{
+Set this parameter to @racket[#f] to disable the auto convertion of the response's body data.
+In another word, @racket[http-response-body] of a @racket[http-response] will be a raw string if set this parameter to @racket[#f].
+}
 
-)]{
-@racket[current-http-client/user-agent] is the user agent name used by requesting HTTP servers.   @(linebreak)
-set @racket[current-http-client/response-auto] to false to disable the auto convertion of the response's body data.   @(linebreak)
-@; @racket[current-http-client/pretty-print-depth] is used for http-client to display struct, check @[pretty-print-depth] for more.   @(linebreak)
-
+@defparam[current-http-client/pretty-print-depth v integer? #:value 1]{
+This parameter is used by displaying structs of @racket[http-connection]/@racket[http-request]/@racket[http-response], check @racket[pretty-print-depth] for implement details.
 @examples[#:eval (the-eval)
 (current-http-client/pretty-print-depth)
 (define conn1
-   (http-connection "https://httpbin.org/anything"
-                    (hasheq 'Content-Type "application/json" 'Accept "application/json")
-                    (hasheq 'made-in "China" 'price 10)))
+(http-connection "https://httpbin.org/anything"
+(hasheq 'Content-Type "application/json" 'Accept "application/json")
+(hasheq 'made-in "China" 'price 10)))
 conn1
-
 (current-http-client/pretty-print-depth 2)
 conn1
-]}
+]
+}
 
-
-
-
-
-
+@subsection{Structs}
+The displaying of HTTP client strcuts is controlled by @racket[current-http-client/pretty-print-depth].
 
 @defstruct*[http-connection ([url string?]
                              [headers hasheq]
                              [data hasheq])]{
-  construct a http-connection instance and use it with such as @racket[http-get] when you want to request the same website with similar data.
+Construct a @racket[http-connection] instance and use it later by such as @racket[http-get] when you're requesting same website with nuance path/data/headers, check @secref["request-nuance-urls"] for usage examples.
 }
 
 @defstruct*[http-response ([request http-request?]
                            [code number?]
                            [headers hasheq]
                            [body hasheq])]{
-  You will get a http-response struct instance if you're doing a request using this lib's function such as @racket[http-get].
+You will get a @racket[http-response] struct instance if you're doing a request such as using @racket[http-get].
 }
 
 @defstruct*[http-request ([url string?]
                           [method symbol?]
                           [headers hasheq]
                           [data hasheq])]{
-  for the most common time, http-request is included in the @racket[http-response] instance.
+Mostly, @racket[http-request] is included in the @racket[http-response] instance.
 }
 
-
-
-
-
+@subsection{Requests}
 @deftogether[(
 @defproc[(http-get [conn (or/c string? http-connection?)]
-                   [#:data data hasheq (hasheq)]
                    [#:path path string? ""]
+                   [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
          http-resonse?]
 @defproc[(http-post [conn (or/c string? http-connection?)]
-                   [#:data data hasheq (hasheq)]
                    [#:path path string? ""]
+                   [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
          http-resonse?]
 @defproc[(http-head [conn (or/c string? http-connection?)]
-                   [#:data data hasheq (hasheq)]
                    [#:path path string? ""]
+                   [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
          http-resonse?]
 @defproc[(http-options [conn (or/c string? http-connection?)]
-                   [#:data data hasheq (hasheq)]
                    [#:path path string? ""]
+                   [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
          http-resonse?]
 @defproc[(http-put [conn (or/c string? http-connection?)]
-                   [#:data data hasheq (hasheq)]
                    [#:path path string? ""]
+                   [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
          http-resonse?]
 @defproc[(http-delete [conn (or/c string? http-connection?)]
-                   [#:data data hasheq (hasheq)]
                    [#:path path string? ""]
+                   [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
          http-resonse?]
 @defproc[(http-patch [conn (or/c string? http-connection?)]
-                   [#:data data hasheq (hasheq)]
                    [#:path path string? ""]
+                   [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
          http-resonse?]
 )]{
-Fucntions to do the http request.
+Procedures to do the http requests.
 }
-
 
 @defproc[(http-do [method symbol?] [conn http-connection?]
                   [#:data data hasheq (hasheq)]
                   [#:path path string? ""]
                   [#:headers headers hasheq (hasheq)])
 http-response?]{
-The low level function to do the http request.
+The low level function to do the http requests.
 }
 
 
 
-@section{Bug Report}
+@section{Others}
+@subsection{Bug Report}
 Please go to github and create an issue for this repo.
 
-@section{TODOs}
+@subsection{TODOs}
 @itemlist[
 @item{global param of debug mode to show request and response log msg just like the ruby faraday.}
 @item{define a global param for pretty-print-depth for write-proc to show customized depth.}
 @item{make param of hasheq can also be alist and dict data.}
+]
+
+@subsection{Change Logs}
+@itemlist[
+@item{fix get urls with params will raise error and enhance docs --2021/02/26}
 ]
