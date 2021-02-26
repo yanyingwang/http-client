@@ -124,7 +124,7 @@ conn1
 }
 
 @subsection{Structs}
-The displaying of HTTP client strcuts is controlled by @racket[current-http-client/pretty-print-depth].
+The displaying of HTTP client structs is controlled by @racket[current-http-client/pretty-print-depth].
 
 @defstruct*[http-connection ([url string?]
                              [headers hasheq]
