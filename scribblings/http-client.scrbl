@@ -18,7 +18,7 @@ A practical Racket HTTP client for interacting data with HTTP servers.
 
 @section[#:tag "common-usage-example"]{Common Usage Example}
 @subsection{Explicitly request URLs}
-Request @litchar{https://httpbin.org/anything/fruits?color=red&made-in=China&price=10} with setting request headers @litchar{Token: your-token} in Racket would be like below:
+Request @litchar{https://httpbin.org/anything/fruits?color=red&made-in=China&price=10} with setting request headers @litchar{Token: your-token} would be like below:
 @codeblock|{
 (http-get "https://httpbin.org"
           #:path "anything/fruits"
@@ -30,7 +30,7 @@ Request @litchar{https://httpbin.org/anything/fruits?color=red&made-in=China&pri
 You can define a @racket[http-connection], and use it to do requests with modifying some details of it.
 
 @subsubsection{Define connections}
-Predefine a @racket[http-connection] with presetted url/path/headers/data:
+Predefine a @racket[http-connection] with presetting url/path/headers/data:
 @codeblock|{
 (define httpbin-org/anthing
     (http-connection "https://httpbin.org/anything"
@@ -45,15 +45,15 @@ Do a GET request with adding path/data/headers to the predefined @racket[http-co
 @item{
 get @litchar{https://httpbin.org/anything/fruits?made-in=China&price=10&color=red} with setting request headers @litchar{Token: your-token; Another-Token: your-another-token} in Racket:
 @codeblock|{
-(http-get http-bin-org/anthing
+(http-get httpbin-org/anthing
               #:path "/fruits"
               #:data (hasheq 'color "red")
               #:headers (hasheq 'Another-Token "your-another-token"))
 }|
 
-and previous code is supported to be written in another way:
+and the previous code is supported to be written in another way:
 @codeblock|{
-(http-bin-org/anthing 'get
+(httpbin-org/anthing 'get
               #:path "/fruits"
               #:data (hasheq 'color "red")
               #:headers (hasheq 'Another-Token "your-another-token"))
@@ -61,7 +61,7 @@ and previous code is supported to be written in another way:
 }
 
 @item{
-do a POST request like @litchar{curl https://httpbin.org/anything/fruits --header "Content-Type: application/application/x-www-form-urlencoded; Token: your-overwritten-token" -d '{"make-in": "China", "price": "10", "color": "red"}'} in Raket:
+do a POST request like @litchar{curl https://httpbin.org/anything/fruits --header "Content-Type: application/application/x-www-form-urlencoded; Token: your-overwritten-token" -d '{"make-in": "China", "price": "10", "color": "red"}'}:
 @codeblock|{
 (http-post httpbin-org/anthing
            #:path "/fruits"
@@ -110,13 +110,13 @@ In another word, @racket[http-response-body] of a @racket[http-response] will be
 }
 
 @defparam[current-http-client/pretty-print-depth v integer? #:value 1]{
-This parameter is used by displaying structs of @racket[http-connection]/@racket[http-request]/@racket[http-response], check @racket[pretty-print-depth] for implement details.
+This parameter is used by displaying structs of @racket[http-connection]/@racket[http-request]/@racket[http-response], check @racket[pretty-print-depth] for its implement details.
 @examples[#:eval (the-eval)
-(current-http-client/pretty-print-depth)
 (define conn1
-(http-connection "https://httpbin.org/anything"
-(hasheq 'Content-Type "application/json" 'Accept "application/json")
-(hasheq 'made-in "China" 'price 10)))
+   (http-connection "https://httpbin.org/anything"
+                    (hasheq 'Content-Type "application/json" 'Accept "application/json")
+                    (hasheq 'made-in "China" 'price 10)))
+(current-http-client/pretty-print-depth)
 conn1
 (current-http-client/pretty-print-depth 2)
 conn1
@@ -204,11 +204,11 @@ Please go to github and create an issue for this repo.
 @subsection{TODOs}
 @itemlist[
 @item{global param of debug mode to show request and response log msg just like the ruby faraday.}
-@item{define a global param for pretty-print-depth for write-proc to show customized depth.}
 @item{make param of hasheq can also be alist and dict data.}
 ]
 
 @subsection{Change Logs}
 @itemlist[
+@item{define a global param for pretty-print-depth for write-proc to show customized depth. --2021/02/26}
 @item{fix get urls with params will raise error and enhance docs --2021/02/26}
 ]
