@@ -203,6 +203,8 @@ Please go to github and create an issue for this repo.
 
 @subsection{TODOs}
 @itemlist[
+@item{make litchar{#<request GET "https://geoapi.qweather.com/v2/city/lookup?gzip=">} to be shown as litchar{#<request GET "https://geoapi.qweather.com/.....">} if it's too long.
+>}
 @item{global param of debug mode to show request and response log msg just like the ruby faraday.}
 @item{make param of hasheq can also be alist and dict data.}
 ]
