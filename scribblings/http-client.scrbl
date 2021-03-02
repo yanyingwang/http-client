@@ -153,37 +153,37 @@ Mostly, @racket[http-request] is included in the @racket[http-response] instance
                    [#:path path string? ""]
                    [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
-         http-resonse?]
+         http-response?]
 @defproc[(http-post [conn (or/c string? http-connection?)]
                    [#:path path string? ""]
                    [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
-         http-resonse?]
+         http-response?]
 @defproc[(http-head [conn (or/c string? http-connection?)]
                    [#:path path string? ""]
                    [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
-         http-resonse?]
+         http-response?]
 @defproc[(http-options [conn (or/c string? http-connection?)]
                    [#:path path string? ""]
                    [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
-         http-resonse?]
+         http-response?]
 @defproc[(http-put [conn (or/c string? http-connection?)]
                    [#:path path string? ""]
                    [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
-         http-resonse?]
+         http-response?]
 @defproc[(http-delete [conn (or/c string? http-connection?)]
                    [#:path path string? ""]
                    [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
-         http-resonse?]
+         http-response?]
 @defproc[(http-patch [conn (or/c string? http-connection?)]
                    [#:path path string? ""]
                    [#:data data hasheq (hasheq)]
                    [#:headers headers hasheq (hasheq)])
-         http-resonse?]
+         http-response?]
 )]{
 Procedures to do the http requests.
 }
