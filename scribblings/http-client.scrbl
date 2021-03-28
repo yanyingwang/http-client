@@ -15,6 +15,15 @@
 A practical Racket HTTP client for interacting data with HTTP servers.
 @; @table-of-contents[]
 
+@margin-note{
+In case of backwards incompatible updating, you can consult the git source reference as the package source to be install: @linebreak[]
+@litchar{raco pkg install "https://github.com/yanyingwang/http-client.git#f1b55669b23c35447c0688ef0495a6abfb7c9fdd"}. @linebreak[]
+And to install a specific version:  @linebreak[]
+@litchar{raco pkg install https://github.com/yanyingwang/http-client.git#v0.0.1}. @linebreak[]
+Check more at @secref["concept:source" #:doc '(lib "pkg/scribblings/pkg.scrbl")].
+}
+
+
 
 @section[#:tag "common-usage-example"]{Common Usage Example}
 @subsection{Explicitly request URLs}
