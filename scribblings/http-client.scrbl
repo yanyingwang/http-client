@@ -19,7 +19,7 @@ A practical Racket HTTP client for interacting data with HTTP servers.
 @item{In case of backwards incompatible updating, you can:
 @itemlist[
 @item{Consulting the git commit references as the @secref["concept:source" #:doc '(lib "pkg/scribblings/pkg.scrbl")] to do the installation:  @commandline{raco pkg install "https://github.com/yanyingwang/http-client.git#f1b55669b23c35447c0688ef0495a6abfb7c9fdd"}}
-@item{Installing with using git tags:  @commandline{raco pkg install https://github.com/yanyingwang/http-client.git#v0.0.1}}
+@item{Installing with using git tags:  @commandline{raco pkg install "https://github.com/yanyingwang/http-client.git#v0.0.1"}}
 ]}
 @item{Releases: @url{https://github.com/yanyingwang/http-client/releases}}
 ]
