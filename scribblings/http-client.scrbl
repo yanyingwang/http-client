@@ -15,13 +15,14 @@
 A practical Racket HTTP client for interacting data with HTTP servers.
 @; @table-of-contents[]
 
-@margin-note{
-In case of backwards incompatible updating, you can consult the git source reference as the package source to be install: @linebreak[]
-@litchar{raco pkg install "https://github.com/yanyingwang/http-client.git#f1b55669b23c35447c0688ef0495a6abfb7c9fdd"}. @linebreak[]
-And to install a specific version:  @linebreak[]
-@litchar{raco pkg install https://github.com/yanyingwang/http-client.git#v0.0.1}. @linebreak[]
-Check more at @secref["concept:source" #:doc '(lib "pkg/scribblings/pkg.scrbl")].
-}
+@itemlist[
+@item{In case of backwards incompatible updating, you can:
+@itemlist[
+@item{Consulting the git commit references as the @secref["concept:source" #:doc '(lib "pkg/scribblings/pkg.scrbl")] to do the installation:  @commandline{raco pkg install "https://github.com/yanyingwang/http-client.git#f1b55669b23c35447c0688ef0495a6abfb7c9fdd"}}
+@item{Installing with using git tags:  @commandline{raco pkg install https://github.com/yanyingwang/http-client.git#v0.0.1}}
+]}
+@item{Releases: @url{https://github.com/yanyingwang/http-client/releases}}
+]
 
 
 
@@ -110,15 +111,18 @@ do a POST request with copying and modifying the predefined @racket[http-connect
 @subsection{Parameters}
 @defparam[current-http-client/user-agent v string? #:value "http-client[your-system-name/your-vm-sytem-type-name/your-racket-version]"]{
 The user agent name used by requesting the HTTP servers.
+@history[#:added "1.0"]
 }
 
 @defparam[current-http-client/response-auto v boolean? #:value #t]{
 Set this parameter to @racket[#f] to disable the auto convertion of the response's body data.
 In another word, @racket[http-response-body] of a @racket[http-response] will be a raw string if set this parameter to @racket[#f].
+@history[#:changed "1.0" "renamed from current-http-response-auto"]
 }
 
 @defparam[current-http-client/pretty-print-depth v integer? #:value 1]{
 This parameter is used by displaying structs of @racket[http-connection]/@racket[http-request]/@racket[http-response], check @racket[pretty-print-depth] for its implement details.
+@history[#:added "1.0"]
 @examples[#:eval (the-eval)
 (define conn1
   (http-connection "https://httpbin.org/anything"

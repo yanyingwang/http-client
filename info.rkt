@@ -4,5 +4,5 @@
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/http-client.scrbl" ())))
 (define pkg-desc "A practical http client library for sending data to http servers.")
-(define version "0.1")
+(define version "0.2")
 (define pkg-authors '("Yanying Wang"))
