@@ -8,8 +8,7 @@
 @(define the-eval
          (make-eval-factory '(http-client)))
 
-@jquery
-@rainbow-delimiters
+@script/rainbow-delimiters*
 
 @title{HTTP Client}
 @author[(author+email "Yanying Wang" "yanyingwang1@gmail.com")]
