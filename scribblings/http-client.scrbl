@@ -2,10 +2,14 @@
 @(require (for-label http-client
                      (except-in racket/base >)
                      racket/pretty)
-           scribble/eval)
+           scribble/eval
+           scribble-rainbow-delimiters)
 
 @(define the-eval
-   (make-eval-factory '(http-client)))
+         (make-eval-factory '(http-client)))
+
+@jquery
+@rainbow-delimiters
 
 @title{HTTP Client}
 @author[(author+email "Yanying Wang" "yanyingwang1@gmail.com")]
@@ -13,85 +17,89 @@
 
 @defmodule[http-client]
 A practical Racket HTTP client for interacting data with HTTP servers.
-@; @table-of-contents[]
+@itemlist[
+@item{
+In case of backwards incompatible updating, you can do the installation with:
 
 @itemlist[
-@item{In case of backwards incompatible updating, you can:
-@itemlist[
-@item{Consulting the git commit references as the @secref["concept:source" #:doc '(lib "pkg/scribblings/pkg.scrbl")] to do the installation:  @commandline{raco pkg install "https://github.com/yanyingwang/http-client.git#f1b55669b23c35447c0688ef0495a6abfb7c9fdd"}}
-@item{Installing with using git tags:  @commandline{raco pkg install "https://github.com/yanyingwang/http-client.git#v0.0.1"}}
+@item{consulting the git commit references as @secref["concept:source" #:doc '(lib "pkg/scribblings/pkg.scrbl")]:
+@commandline{raco pkg install "https://github.com/yanyingwang/http-client.git#f1b55669b23c35447c0688ef0495a6abfb7c9fdd"}}
+
+@item{using git tags:
+@commandline{raco pkg install "https://github.com/yanyingwang/http-client.git#v0.0.1"}}
 ]}
+
 @item{Releases: @url{https://github.com/yanyingwang/http-client/releases}}
 ]
-
-
 
 @section[#:tag "common-usage-example"]{Common Usage Example}
 @subsection{Explicitly request URLs}
 Request @litchar{https://httpbin.org/anything/fruits?color=red&made-in=China&price=10} with setting request headers @litchar{Token: your-token} would be like below:
-@codeblock|{
-> (http-get "https://httpbin.org"
-            #:path "anything/fruits"
-            #:data (hasheq 'color "red" 'made-in "China" 'price 10)
-            #:headers (hasheq 'Token "your-token"))
-}|
+@racketinput[
+(http-get "https://httpbin.org"
+          #:path "anything/fruits"
+          #:data (hasheq 'color "red" 'made-in "China" 'price 10)
+          #:headers (hasheq 'Token "your-token"))
+]
 
 @subsection[#:tag "request-nuance-urls"]{Request nuance URLs}
 You can define a @racket[http-connection], and use it to do requests with modifying some details of it.
 
 @subsubsection{Define connections}
 Predefine a @racket[http-connection] with presetting url/path/headers/data:
-@codeblock|{
-> (define httpbin-org/anthing
-      (http-connection "https://httpbin.org/anything"
-                       (hasheq 'Content-Type "application/json")
-                       (hasheq 'made-in "China" 'price 10)))
-}|
+@racketinput[
+(define httpbin-org/anthing
+    (http-connection "https://httpbin.org/anything"
+                     (hasheq 'Content-Type "application/json")
+                     (hasheq 'made-in "China" 'price 10)))
+]
 
 @subsubsection{Do the requests}
 Do a GET request with adding path/data/headers to the predefined @racket[http-connection]:
 
 @itemlist[
-@item{
-get @litchar{https://httpbin.org/anything/fruits?made-in=China&price=10&color=red} with setting request headers @litchar{Token: your-token; Another-Token: your-another-token} in Racket:
-@codeblock|{
-> (http-get httpbin-org/anthing
-            #:path "/fruits"
-            #:data (hasheq 'color "red")
-            #:headers (hasheq 'Another-Token "your-another-token"))
-}|
-
-and the previous code is supported to be written in another way:
-@codeblock|{
-> (http-bin-org/anthing 'get
-                         #:path "/fruits"
-                         #:data (hasheq 'color "red")
-                         #:headers (hasheq 'Another-Token "your-another-token"))
-}|
-}
-
-@item{
-do a POST request like @litchar{curl https://httpbin.org/anything/fruits --header "Content-Type: application/application/x-www-form-urlencoded" --header "Token: your-overwritten-token" -d '{"make-in": "China", "price": "10", "color": "red"}'} in Raket:
-@codeblock|{
-> (http-post httpbin-org/anthing
-             #:path "/fruits"
-             #:data (hasheq 'color "red")
-             #:headers (hasheq 'Content-Type "application/x-www-form-urlencoded" 'Token "your-overwritten-token"))
-}|
-}
-
-@item{
-do a POST request with copying and modifying the predefined @racket[http-connection]'s headers to @litchar{Content-Type: application/x-www-form-urlencoded}:
-@codeblock|{
-> (define new-conn
-    (struct-copy http-connection httpbin-org/anthing
-                 [headers (hasheq 'Content-Type "application/x-www-form-urlencoded")]))
-> (http-post new-conn)
-}|
-}
+@item{Get @litchar{https://httpbin.org/anything/fruits?made-in=China&price=10&color=red}
+with setting request headers to @litchar{Token: your-token; Another-Token: your-another-token}
+in Racket:
+@racketinput[
+(http-get httpbin-org/anthing
+          #:path "/fruits"
+          #:data (hasheq 'color "red")
+          #:headers (hasheq 'Another-Token "your-another-token"))
 ]
 
+and the preceding code is supported to be written in another way like below:
+@racketinput[
+(http-bin-org/anthing 'get
+                       #:path "/fruits"
+                       #:data (hasheq 'color "red")
+                       #:headers (hasheq 'Another-Token "your-another-token"))
+]}
 
+@item{Do a POST request like
+@commandline|{
+curl -X GET https://httpbin.org/anything/fruits
+     --header "Content-Type: application/application/x-www-form-urlencoded"
+     --header "Token: your-overwritten-token"
+     -d '{"make-in": "China", "price": "10", "color": "red"}'
+}|
+in Raket:
+@racketinput[
+(http-post httpbin-org/anthing
+           #:path "/fruits"
+           #:data (hasheq 'color "red")
+           #:headers (hasheq 'Content-Type "application/x-www-form-urlencoded" 'Token "your-overwritten-token"))
+]}
+
+@item{Do a POST request with copying and modifying the predefined @racket[http-connection]'s headers to
+@litchar{Content-Type: application/x-www-form-urlencoded}:
+@racketinput[
+(define new-conn
+  (struct-copy http-connection httpbin-org/anthing
+               [headers (hasheq 'Content-Type "application/x-www-form-urlencoded")]))
+(http-post new-conn)
+]}
+]
 
 @; (code:line
 @; (define res (http-post "https://httpbin.org/anything"
@@ -104,7 +112,6 @@ do a POST request with copying and modifying the predefined @racket[http-connect
 @;                          #:data (hasheq 'color "red")))
 @;   (http-response-body res))
 @; ]
-
 
 
 @section{Reference}

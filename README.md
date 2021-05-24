@@ -10,6 +10,6 @@ http-client
           #:headers (hasheq 'Accept "application/json" 'Token "temp-token-abcef"))
 ~~~
 
-check more doc at: https://yanyingwang.github.io/http-client/ or https://docs.racket-lang.org/http-client/index.html
+check more doc at: https://yanying.wang/http-client/
 
 https://developer.mozilla.org/en-US/docs/Web/HTTP
