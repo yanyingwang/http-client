@@ -12,16 +12,18 @@ jobs:
         racket-variant: ["CS"]
     name: main
     steps:
-      - uses: actions/checkout@master
-      - uses: Bogdanp/setup-racket@v0.5
+      - uses: actions/checkout@v2
+      - uses: Bogdanp/setup-racket@v0.12
         with:
           architecture: x64
-          distribution: full # or minimal
+          distribution: full
           variant: ${{ matrix.racket-variant }}
           version: ${{ matrix.racket-version }}
-      - name: install deps
-        run: |
-          raco pkg install --auto
+      - name: Installing pkgs
+        run: raco pkg install --no-docs --auto --name http-client
+      - name: Compiling and building its docs
+        run: raco setup --check-pkg-deps --unused-pkg-deps http-client
+
       - name: build docs
         run: |
           raco scribble \
