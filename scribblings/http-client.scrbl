@@ -1,7 +1,6 @@
 #lang scribble/manual
 @(require (for-label http-client
-                     (except-in racket/base >)
-                     racket/pretty)
+                     racket/base)
            scribble/eval
            scribble-rainbow-delimiters)
 
