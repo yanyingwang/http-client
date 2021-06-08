@@ -1,43 +1,34 @@
 #lang at-exp racket/base
 
-(require racket/generic
-         (for-syntax racket/base racket/list)
+(require (for-syntax racket/base racket/syntax)
          (file "./private/params.rkt")
          (file "./private/core.rkt"))
 (provide (except-out (all-defined-out) define-http-methods) ;; TODO: add contracts to http-get/post...
          (all-from-out (file "./private/params.rkt"))
          (all-from-out (file "./private/core.rkt")))
 
-
-;; TODO: enhance below syntax defining code with syntax-case/parse....
 (define-syntax (define-http-methods stx)
-  (define names (cdr (syntax->datum stx)))
-  (define code `(begin ,@(map (lambda (e)
-                                `(define (,(string->symbol (format "http-~a" e))
-                                          url
-                                          #:data [data (hasheq)]
-                                          #:path [path ""]
-                                          #:headers [headers (hasheq)])
-                                   (define conn
-                                     (if (string? url)
-                                         (http-connection url (hasheq) (hasheq))
-                                         url))
-                                   (http-do (quote ,e) conn #:data data #:path path #:headers headers)))
-                              names)))
-  ;; (print code) ; debug
-  (datum->syntax stx code))
+  (define (define-fun name)
+    (with-syntax
+        ([n name])
+      #`(define (#,(format-id #'n "http-~a" (syntax-e #'n)) url
+                 #:data [data (hasheq)]
+                 #:path [path ""]
+                 #:headers [headers (hasheq)])
+          (define conn
+            (if (string? url)
+                (http-connection url (hasheq) (hasheq))
+                url))
+          (http-do 'n conn #:data data #:path path #:headers headers))))
+  (syntax-case stx ()
+    [(_ names ...)
+     (with-syntax
+         ([(define-funs ...)
+           (map define-fun
+                (syntax->list #'(names ...)))])
+       #'(begin
+           define-funs ...))]))
 (define-http-methods get head post put delete options patch)
-
-;;;;;;; code Example of (define-http-methods get)
-;; (define (http-get url #:data [data (hasheq)]
-;;                   #:path [path ""]
-;;                   #:headers [headers (hasheq)])
-;;   (define conn
-;;     (if (string? url)
-;;         (http-connection url (hasheq) (hasheq))
-;;         url))
-;;   (http-do 'get conn #:data data #:path path #:headers headers))
-
 
 
 ;;;;  =========> test :::
