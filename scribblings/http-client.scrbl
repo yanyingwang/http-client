@@ -95,8 +95,11 @@ in Raket:
 (define new-conn
   (struct-copy http-connection httpbin-org/anthing
                [headers (hasheq 'Content-Type "application/x-www-form-urlencoded")]))
+]
+@racketinput[
 (http-post new-conn)
-]}
+]
+}
 ]
 
 @; (code:line
