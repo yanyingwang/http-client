@@ -99,18 +99,18 @@
     (for/hasheq ([e res-headers-raw])
       (match (string-split (bytes->string/utf-8 e) ":")
         [(list-rest a b)
-         (define k (string->symbol a))
+         (define k (string->symbol (string-downcase a)))
          (define v (string-trim (string-join b)))
          (values k v)])))
   (define res-body
     (match res-headers
       [_ #:when (not (current-http-client/response-auto))
          res-body-raw]
-      [(hash-table ('Content-Type (regexp #rx"^application/json.*")))
+      [(hash-table ('content-type (regexp #rx"^application/json.*")))
        (string->jsexpr res-body-raw)]
-      [(hash-table ('Content-Type (regexp #rx"^text/html.*")))
+      [(hash-table ('content-type (regexp #rx"^text/html.*")))
        (html->xexp res-body-raw)]
-      [(hash-table ('Content-Type (regexp #rx"^(application/xml|text/xml|application/xhtml+xml).*")))
+      [(hash-table ('content-type (regexp #rx"^(application/xml|text/xml|application/xhtml+xml).*")))
        (string->xexpr res-body-raw)]
       [_ res-body-raw]))
   (http-response req res-code res-headers res-body))
