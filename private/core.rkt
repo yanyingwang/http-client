@@ -43,16 +43,13 @@
   (define data3 (make-hash (url-query url)))
   (define headers2 (http-connection-headers conn))
   (define req-path1
-    (for/list ([e (url-path url)])
-      (string-append "/" (path/param-path e))))
+    (filter non-empty-string? (map path/param-path (url-path url))))
   (define req-path2
-    (for/list ([e (string-split path "/")])
-      (string-append "/" e)))
+    (string-split path "/"))
   (define req-path1&2 (append req-path1 req-path2))
+  (define req-path1&2/encode (map uri-encode req-path1&2))
   (define req-host (url-host url))
-  (define req-path (if (empty? req-path1&2)
-                       "/"
-                       (string-join req-path1&2 "")))
+  (define req-path (string-join (map (lambda (e) (string-append "/" e))  req-path1&2/encode) ""))
   (define req-headers (hash-union headers1 headers2 (hasheq 'User-Agent (current-http-client/user-agent))
                                   #:combine/key (lambda (k v1 v2) v1)))
   (define req-data (hash-union data1 data2 data3
@@ -70,7 +67,7 @@
                                              (cons k (if (number? v)
                                                          (number->string v)
                                                          v)))))]))
-  (when (eq? method 'get)
+  (when (and (eq? method 'get) (non-empty-string? req-data-raw))
     (set! req-path (string-append req-path "?" req-data-raw))
     (set! req-data-raw ""))
   (define req
@@ -80,6 +77,15 @@
                                  (if (url-port url) (number->string (url-port url)) "")
                                  req-path)
                   method req-headers req-data))
+
+  (when (current-http-client/debug)
+    (define (fmt h)
+      (string-join (map (lambda (e) (~a (car e) ": " (cdr e))) (hash->list h)) "\n"))
+    (printf "METHOD  ~a \n" (http-request-method req))
+    (printf "URL  ~a \n" (http-request-url req))
+    (printf "HEADERS  ~a \n" (fmt (http-request-headers req)))
+    (printf "DATA  ~a \n\n" (fmt (http-request-data req)))
+    )
 
   (define-values (res-status-raw res-headers-raw res-in)
     (http-sendrecv req-host req-path
@@ -113,4 +119,12 @@
       [(hash-table ('Content-Type (regexp #rx"^(application/xml|text/xml|application/xhtml+xml).*")))
        (string->xexpr res-body-raw)]
       [_ res-body-raw]))
+
+  (when (current-http-client/debug)
+    (define (fmt h)
+      (string-join (map (lambda (e) (~a (car e) ": " (cdr e))) (hash->list h)) "\n"))
+    (printf "RESPONSE CODE  ~a \n" res-code)
+    (printf "RESPONSE HEADERS  ~a \n" (fmt res-headers))
+    (printf "RESPNOSE BODY  ~a \n\n\n\n" res-body-raw)
+    )
   (http-response req res-code res-headers res-body))

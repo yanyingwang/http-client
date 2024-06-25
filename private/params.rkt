@@ -13,3 +13,6 @@
 
 (define current-http-client/user-agent
   (make-parameter @~a{http-client[@(system-type)/@(system-type 'vm)/@(version)]}))
+
+(define current-http-client/debug
+  (make-parameter #f))

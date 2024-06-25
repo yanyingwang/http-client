@@ -145,6 +145,11 @@ conn1
 ]
 }
 
+@defparam[current-http-client/debug v boolean? #:value #f]{
+Show debug log or not.
+@history[#:added "1.0.1"]
+}
+
 @subsection{Structs}
 @margin-note{The displaying of HTTP client strcuts is controlled by @racket[current-http-client/pretty-print-depth].}
 
@@ -233,5 +238,7 @@ Please go to github and create an issue for this repo.
 @subsection{Change Logs}
 @itemlist[
 @item{define a global param for pretty-print-depth for write-proc to show customized depth. --2021/02/26}
-@item{fix get urls with params will raise error and enhance docs --2021/02/26}
+@item{fix get urls with params will raise error and enhance docs. --2021/02/26}
+@item{fix additional / and ? added in the url sometimes. --2024/06/26}
+@item{show debug log. --2024/06/26}
 ]

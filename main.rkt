@@ -9,8 +9,7 @@
 
 (define-syntax (define-http-methods stx)
   (define (define-fun name)
-    (with-syntax
-        ([n name])
+    (with-syntax ([n name])
       #`(define (#,(format-id #'n "http-~a" (syntax-e #'n)) url
                  #:data [data (hasheq)]
                  #:path [path ""]
