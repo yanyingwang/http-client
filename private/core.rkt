@@ -40,7 +40,7 @@
                  #:headers [headers1 (hasheq)])
   (define url (string->url (http-connection-url conn)))
   (define data2 (http-connection-data conn))
-  (define data3 (make-hash (url-query url)))
+  (define data3 (make-hasheq (url-query url)))
   (define headers2 (http-connection-headers conn))
   (define req-path1
     (filter non-empty-string? (map path/param-path (url-path url))))
