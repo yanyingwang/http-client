@@ -3,7 +3,7 @@
 (require racket/string racket/list racket/hash racket/port
          racket/match racket/format
          net/http-client net/uri-codec net/url-string
-         json xml html-parsing
+         json xml html-parsing gregor
          (file "./params.rkt") (file "./utils.rkt"))
 (provide (all-defined-out))
 
