@@ -38,6 +38,7 @@
                  #:data [data1 (hasheq)]
                  #:path [path ""]
                  #:headers [headers1 (hasheq)])
+  (define hcid (random 999999999))
   (define url (string->url (http-connection-url conn)))
   (define data2 (http-connection-data conn))
   (define data3 (make-hasheq (url-query url)))
@@ -81,8 +82,8 @@
   (when (current-http-client/debug)
     (define (fmt h)
       (string-join (map (lambda (e) (~a "  " (car e) ": " (cdr e))) (hash->list h)) "\n"))
-    (printf (datetime->iso8601 (now)))
-    (printf "~a ~a\n" (string-upcase (http-request-method req)) (http-request-url req))
+    (displayln (~a "HTTP-CLIENT-ID: " hcid  ", " (datetime->iso8601 (now))))
+    (displayln (~a (string-upcase (symbol->string (http-request-method req))) " " (http-request-url req)))
     (printf "HEADERS: \n~a\n" (fmt (http-request-headers req)))
     (printf "DATA: \n~a\n\n" (fmt (http-request-data req)))
     )
@@ -123,10 +124,10 @@
   (when (current-http-client/debug)
     (define (fmt h)
       (string-join (map (lambda (e) (~a "  " (car e) ": " (cdr e))) (hash->list h)) "\n"))
-    (printf (datetime->iso8601 (now)))
+    (displayln (~a "HTTP-CLIENT-ID: " hcid  ", " (datetime->iso8601 (now))))
     (printf "RESPONSE CODE: ~a\n" res-code)
     (printf "RESPONSE HEADERS: \n~a\n" (fmt res-headers))
-    (printf "RESPNOSE BODY: \n~a\n\n\n\n" res-body-raw)
+    (printf "RESPNOSE BODY: ~a\n\n\n\n" res-body-raw)
     )
 
   (http-response req res-code res-headers res-body))
