@@ -81,8 +81,8 @@
   (when (current-http-client/debug)
     (define (fmt h)
       (string-join (map (lambda (e) (~a "  " (car e) ": " (cdr e))) (hash->list h)) "\n"))
-    (printf "METHOD: ~a\n" (http-request-method req))
-    (printf "URL: ~a\n" (http-request-url req))
+    (printf (datetime->iso8601 (now)))
+    (printf "~a ~a\n" (string-upcase (http-request-method req)) (http-request-url req))
     (printf "HEADERS: \n~a\n" (fmt (http-request-headers req)))
     (printf "DATA: \n~a\n\n" (fmt (http-request-data req)))
     )
@@ -119,11 +119,14 @@
       [(hash-table ('Content-Type (regexp #rx"^(application/xml|text/xml|application/xhtml+xml).*")))
        (string->xexpr res-body-raw)]
       [_ res-body-raw]))
+
   (when (current-http-client/debug)
     (define (fmt h)
       (string-join (map (lambda (e) (~a "  " (car e) ": " (cdr e))) (hash->list h)) "\n"))
+    (printf (datetime->iso8601 (now)))
     (printf "RESPONSE CODE: ~a\n" res-code)
     (printf "RESPONSE HEADERS: \n~a\n" (fmt res-headers))
     (printf "RESPNOSE BODY: \n~a\n\n\n\n" res-body-raw)
     )
+
   (http-response req res-code res-headers res-body))
